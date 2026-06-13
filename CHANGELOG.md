@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- `auth login` and `auth exchange` no longer print access or refresh tokens
+  after saving them to the token file.
+
 ### Changed
 
 - **Node.js**: CI matrix is now Node 22 + 24 (latest 2 LTS lines).
