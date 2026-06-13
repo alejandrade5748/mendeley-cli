@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Extract subject from last tag to this tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+
+          if [ -n "$PREV_TAG" ]; then
+            LOG=$(git log $PREV_TAG..$CURRENT_TAG --oneline --format="• %s (%h)")
+          else
+            LOG=$(git log --oneline --format="• %s (%h)")
+          fi
+
+          CHANGELOG="## Changes since $PREV_TAG\n\n$LOG\n\n## Installation\n\n\`\`\`bash\nnpm install -g mendeley-cli\n\`\`\`\n\nOr:\n\n\`\`\`bash\nnpm install mendeley-cli\n\`\`\`\n\nSee the [full changelog](https://github.com/VictorTomaili/mendeley-cli/compare/$PREV_TAG..$CURRENT_TAG) on GitHub."
+
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG="## Initial release (v$CURRENT_TAG)\n\n$LOG\n\n## Installation\n\n\`\`\`bash\nnpm install -g mendeley-cli\n\`\`\`\n\nOr:\n\n\`\`\`bash\nnpm install mendeley-cli\n\`\`\`\`"
+          fi
+
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changelog.outputs.body }}
+          generate_release_notes: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to npm
+        uses: npm/publish@v4
+        with:
+          provenance: true
+          attestations: true
