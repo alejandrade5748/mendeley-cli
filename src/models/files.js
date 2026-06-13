@@ -3,14 +3,12 @@
  */
 
 import { createWriteStream } from 'node:fs';
-import { join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 
 import { Annotation } from './annotations.js';
 import { Color, BoundingBox, Position } from './common.js';
 import { SessionResponseObject } from '../response.js';
-
-const FILENAME_REGEX = /filename="?([^";]+)"?/;
+import { parseContentDispositionFilename, safeFilename, safeJoin } from '../safe_filename.js';
 
 export class File extends SessionResponseObject {
   static contentType = 'application/vnd.mendeley-file.1+json';
@@ -44,13 +42,20 @@ export class File extends SessionResponseObject {
 
   /**
    * Download the file to `directory`.  Returns the local path.
+   *
+   * The filename is taken from the response's `Content-Disposition`
+   * header (preferred) or the file's metadata `file_name` field.  In
+   * either case the name is validated by `safeFilename` and the
+   * resolved path is verified to stay inside `directory`; absolute
+   * paths and path-traversal segments are rejected before any bytes
+   * are written to disk.
    */
   async download(directory) {
     const rsp = await this.session.get(`/files/${this.id}`, { stream: true });
-    const cd = rsp.headers.get('content-disposition') || '';
-    const match = cd.match(FILENAME_REGEX);
-    const filename = match ? match[1] : this.json.file_name || `file-${this.id}`;
-    const path = join(directory, filename);
+    const headerName = parseContentDispositionFilename(rsp.headers.get('content-disposition'));
+    const rawName = headerName || this.json.file_name || `file-${this.id}`;
+    const filename = safeFilename(rawName);
+    const path = safeJoin(directory, filename);
 
     if (!rsp.body) {
       throw new Error('Response had no body to stream');

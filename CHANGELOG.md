@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (without merging `token.json` or token env vars) and only persist
   allowlisted keys (`clientId`, `clientSecret`, `redirectUri`,
   `host`). Non-allowlisted keys are now rejected by these commands.
+- Path traversal in `File.download` (SDK) and `files download` (CLI)
+  is now prevented. Both layers go through a new
+  `src/safe_filename.js` helper that rejects filenames containing
+  path separators, absolute paths, reserved names (`.`, `..`), and
+  NUL bytes; the resolved output path is then verified to remain
+  inside the destination directory. The CLI's `files download`
+  `--filename` flag is now actually honoured (the previous
+  implementation silently ignored it).
 
 ### Changed
 
