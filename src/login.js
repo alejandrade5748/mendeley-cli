@@ -24,7 +24,7 @@ import { createServer } from 'node:http';
  * @param {number} [port=0] port to listen on (0 = pick a free one)
  * @param {string} [expectedState] if provided, reject if the callback
  *   state doesn't match
- * @returns {Promise<{port: number, captured: Promise<CapturedCode>, close: Function}>}
+ * @returns {Promise<{port: number, captured: Promise<CapturedCode>, close: Function, setState: Function}>}
  */
 export function listenForCode(port = 0, expectedState) {
   let capturedResolve;
@@ -34,8 +34,11 @@ export function listenForCode(port = 0, expectedState) {
     capturedReject = rej;
   });
 
-  // Mutable state so we can set it after the server is already listening.
+  // Mutable so we can set it after the server has started.
   let _expectedState = expectedState;
+  // Reject redirects older than 5 minutes (prevents stale/replay redirects).
+  const _startTime = Date.now();
+  const MAX_AGE_MS = 5 * 60 * 1000;
 
   const server = createServer((req, res) => {
     try {
@@ -54,14 +57,28 @@ export function listenForCode(port = 0, expectedState) {
       }
 
       if (code) {
+        // Reject stale redirects (older than 5 minutes).
+        if (Date.now() - _startTime > MAX_AGE_MS) {
+          res.statusCode = 400;
+          res.setHeader('content-type', 'text/html');
+          res.end(errorPage('Redirect expired. Please run `mendeley auth login` again.'));
+          capturedReject(new Error('Redirect expired'));
+          server.close();
+          return;
+        }
+
         if (_expectedState && state !== _expectedState) {
           res.statusCode = 400;
           res.setHeader('content-type', 'text/html');
-          res.end(errorPage('State mismatch (possible CSRF attack)'));
+          res.end(errorPage(
+            `State mismatch. Expected: ${_expectedState}, got: ${state || '(none)'}. ` +
+            'This may mean you visited an old login URL. Please run `mendeley auth login` again.'
+          ));
           capturedReject(new Error('OAuth state mismatch'));
           server.close();
           return;
         }
+
         res.statusCode = 200;
         res.setHeader('content-type', 'text/html');
         res.end(successPage());
