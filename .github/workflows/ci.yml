@@ -19,8 +19,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Match package.json `engines.node` and the newest LTS lines.
-        node: ["18", "20", "22"]
+        # Latest 2 LTS lines (Node 22 maintenance, Node 24 active LTS).
+        # Node 18 and 20 are EOL.
+        node: ["22", "24"]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
@@ -55,7 +56,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies

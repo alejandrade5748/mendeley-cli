@@ -4,7 +4,7 @@
 
 **AI-agent-friendly CLI & JavaScript SDK for the Mendeley API**
 
-[![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node.js >= 20](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Tests: 51 passing](https://img.shields.io/badge/tests-51%20passing-brightgreen)](test/)
 
@@ -21,7 +21,7 @@
 The official Mendeley SDK is Python-only and hasn't been updated in years. This project provides:
 
 - **A shell CLI** (`mendeley`) that defaults to **JSON output** — perfect for scripting and AI agents
-- **A JavaScript library** (`import { Mendeley } from 'mendeley-cli'`) for Node.js 18+
+- **A JavaScript library** (`import { Mendeley } from 'mendeley-cli'`) for Node.js 20+
 - **Zero dependencies** (the `open` package is optional, for browser launch)
 - **PKCE auth** with automatic token refresh — log in once, stay logged in
 - **73 help pages** with examples, plus a `--skill` flag that dumps the full command surface as Markdown for LLM system prompts
@@ -197,7 +197,7 @@ mendeley profile get <id>
 
 ## Library API
 
-Use the SDK programmatically in any Node.js 18+ project:
+Use the SDK programmatically in any Node.js 20+ project:
 
 ```bash
 npm install mendeley-cli
@@ -298,7 +298,7 @@ npm run test:unit
 npm run test:integration
 ```
 
-No build step — this is plain ESM JavaScript targeting Node.js 18+.
+No build step — this is plain ESM JavaScript targeting Node.js 20+.
 
 ### Project structure
 

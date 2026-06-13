@@ -26,7 +26,7 @@ test/                   Unit + integration tests
 
 ## Development setup
 
-Requirements: **Node.js >= 18** (see `engines` in `package.json`).
+Requirements: **Node.js >= 20** (see `engines` in `package.json`).
 
 ```bash
 git clone https://github.com/VictorTomaili/mendeley-cli.git
