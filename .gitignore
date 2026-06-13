@@ -1,9 +1,13 @@
 node_modules/
 .env
 .env.*
-!.env.test
+!.env.example
 *.log
 .DS_Store
 coverage/
 .vscode/
 .idea/
+# Local backup of `.git` taken before destructive history rewrites
+# (e.g. `git filter-branch` for secret removal). Safe to delete once
+# the rewrite is verified and force-pushed to origin.
+.git.backup-*/
