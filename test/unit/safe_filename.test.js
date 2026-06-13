@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 
 import {
   parseContentDispositionFilename,
@@ -33,8 +33,14 @@ test('safeFilename rejects path separators', () => {
 });
 
 test('safeFilename rejects absolute paths', () => {
-  assert.throws(() => safeFilename('/etc/passwd'), /absolute path/);
-  assert.throws(() => safeFilename('C:\\Windows\\System32'), /absolute path/);
+  // node:path.isAbsolute is platform-specific: '/etc/passwd' is absolute
+  // on POSIX (Linux/macOS) but not on Windows, and 'C:\\Windows\\System32'
+  // is the reverse. Pick the path that is actually absolute on the running
+  // platform so the test exercises the absolute-path branch of safeFilename.
+  const posixAbs = '/etc/passwd';
+  const win32Abs = 'C:\\Windows\\System32';
+  const absPath = isAbsolute(posixAbs) ? posixAbs : win32Abs;
+  assert.throws(() => safeFilename(absPath), /absolute path/);
 });
 
 test('safeFilename rejects reserved names', () => {

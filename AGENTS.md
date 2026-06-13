@@ -1,5 +1,101 @@
 # AGENTS.md
 
+## Workflow
+
+> For any non-trivial task — fixing a security issue, adding a feature, refactoring — follow the 6-phase workflow below. The four gates all loop back to **Phase 1.1 (Code)** if issues are found; do not bypass them.
+
+### Phase 0 — Pre-work (mandatory)
+
+- **0.1** Read the issue or task description carefully.
+- **0.2 Issue check**: if a referenced issue exists on the tracker, verify it is still **open**. If it is closed, has a merged PR, or has been marked as won't-fix, **stop and tell the user** — the work may already be on `main`, or another agent may have done it. The expected `gh` invocation:
+  ```bash
+  gh issue view <N> --json state,stateReason,closedAt
+  ```
+- **0.3** Read the related code (the file/line references in the issue).
+- **0.4** Sync to latest `main`:
+  ```bash
+  git fetch origin
+  git checkout main
+  git pull --ff-only origin main
+  ```
+- **0.5** Create a feature branch (do not commit directly to `main`):
+  ```bash
+  git checkout -b fix/issue-N-short-description
+  # or feat/, docs/, chore/, test/, refactor/
+  ```
+- **0.6** Re-read the latest version of the files you are about to change — they may have shifted since the issue was filed.
+
+### Phase 1 — Code
+
+- 1.1 Write the minimal fix.
+- 1.2 Add or update tests covering the fix (positive + negative cases).
+- 1.3 Update `CHANGELOG.md` under `[Unreleased]` for user-visible changes.
+
+### Phase 2 — Self-review (before running tests)
+
+- 2.1 Re-read the diff: does it match the issue's **acceptance criteria** exactly?
+- 2.2 Are tests adequate? Edge cases (empty inputs, special characters, concurrent access)?
+- 2.3 Any obvious mistakes (typos, missing imports, wrong file)?
+
+### Phase 3 — Test 🔁 loop gate #1
+
+- 3.1 Run `npm test`.
+- 3.2 Run `npm run format:check`.
+- 3.3 **If failures** → return to **Phase 1.1 (Code)** to fix.
+- 3.4 If pass → continue.
+
+### Phase 4 — Refactor 🔁 loop gate #2
+
+- 4.1 Reuse existing helpers, no duplication, good naming.
+- 4.2 Anything over- or under-engineered?
+- 4.3 `npm run format`.
+- 4.4 Re-run tests after refactor.
+- 4.5 **If issues** → return to **Phase 1.1 (Code)** to fix.
+- 4.6 If clean → continue.
+
+### Phase 5 — Overall review 🔁 loop gate #3
+
+- 5.1 Re-read the full diff one more time, top to bottom.
+- 5.2 `git status --short` — only intended files changed.
+- 5.3 Commit message quality (one line, imperative, conventional prefix).
+- 5.4 Acceptance criteria one more time.
+- 5.5 **If issues** → return to **Phase 1.1 (Code)** to fix.
+- 5.6 If clean → continue.
+
+### Phase 6 — Pull request 🔁 loop gate #4 (post-PR)
+
+- 6.1 Commit on the branch.
+- 6.2 `git push -u origin <branch>`.
+- 6.3 Open the PR (or instruct the user).
+- 6.4 Wait for CI.
+- 6.5 **If CI fails** → return to **Phase 1.1 (Code)** to fix.
+- 6.6 If CI passes → hand off for review.
+
+### Loop summary
+
+```
+        ┌──────────────────────────────────────┐
+        ▼                                      │
+0 → 1 → 2 → 3 —fail→ 1                         │
+        │                                     │
+        └→ 4 —issues→ 1                        │
+        │                                     │
+        └→ 5 —issues→ 1                        │
+        │                                     │
+        └→ 6 —CI fail→ 1                       │
+                  │                           │
+                  └── all clean ──→ done      │
+                                              │
+        (any of the 4 gates loops back to 1) ──┘
+```
+
+### Key principles
+
+1. **Never bypass the loop gates.** A test failure is a stop sign, not "I'll deal with it later".
+2. **Issue check is the first gate** — if the work is already done, don't redo it.
+3. **Always work on a branch.** Don't push directly to `main`. The ruleset on `main` requires a PR; bypass is for the maintainer.
+4. **All four gates loop back to Phase 1.1**, not to Phase 2 or 3. Re-reviewing after a fix is cheap; skipping review is expensive.
+
 ## Project Facts
 
 - This repository is `mendeley-cli`: an ESM-only Node.js CLI and JavaScript SDK for the Mendeley API.
@@ -110,6 +206,9 @@ Local note: if the environment routes `npm` through another package manager and 
 
 ### Preparing A PR
 
+Follow the full **Workflow** at the top of this file. In short:
+
+- Work on a feature branch off the latest `main`. Never push directly to `main`.
 - Run `npm run test:unit`.
 - Run `npm run format:check`.
 - Run `npm test` for shared SDK/session/auth/output changes.
