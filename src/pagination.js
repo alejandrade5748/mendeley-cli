@@ -91,6 +91,7 @@ export class Page {
   async _navigate(rel) {
     const link = this._links[rel];
     if (!link) return null;
+    assertSameOrigin(link.url, this.session.host, rel);
     const rsp = await this.session.get(link.url);
     return new Page(this.session, rsp, this.objType, this.count);
   }
@@ -108,5 +109,45 @@ export class Page {
       page = await page.next_page;
     }
     return out;
+  }
+}
+
+/**
+ * Reject pagination links that would send the bearer token to a
+ * different origin than the configured session host.  A malicious or
+ * compromised API response (or a misconfigured `host`) could otherwise
+ * exfiltrate the token via a `Link: <https://attacker.example/...>` header.
+ *
+ * Relative paths are always allowed — they will be joined to the
+ * session host by `joinUrl` and stay same-origin by construction.
+ * Absolute URLs are compared by origin (scheme + host + port); the
+ * path and query are not considered.
+ *
+ * @param {string} url  the URL from the Link header
+ * @param {string} host the session's configured API host
+ * @param {string} rel  the link relation (for the error message)
+ */
+function assertSameOrigin(url, host, rel) {
+  // Relative paths are always safe — they get joined onto `host` by
+  // joinUrl, so the resulting request is same-origin.
+  if (!/^https?:/i.test(url)) return;
+  let linkOrigin;
+  let hostOrigin;
+  try {
+    linkOrigin = new URL(url).origin;
+    hostOrigin = new URL(host).origin;
+  } catch {
+    // If we can't parse either URL, fail closed — the request is
+    // safer blocked than sent to a host we can't reason about.
+    throw new Error(
+      `Refusing to follow ${rel} pagination link: cannot parse URL: ${JSON.stringify(url)}`,
+    );
+  }
+  if (linkOrigin !== hostOrigin) {
+    throw new Error(
+      `Refusing to follow ${rel} pagination link across origins: ` +
+        `link=${linkOrigin} session=${hostOrigin}. ` +
+        `Pagination must stay on the same origin as the session host.`,
+    );
   }
 }

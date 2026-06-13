@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (without merging `token.json` or token env vars) and only persist
   allowlisted keys (`clientId`, `clientSecret`, `redirectUri`,
   `host`). Non-allowlisted keys are now rejected by these commands.
+- Pagination `Link` headers pointing to a different origin than the
+  session host are now rejected before any fetch is made, preventing
+  the bearer token from being sent to a malicious or compromised
+  `next` / `prev` / `first` / `last` URL. Same-origin absolute URLs
+  and relative paths continue to work as before.
 - Path traversal in `File.download` (SDK) and `files download` (CLI)
   is now prevented. Both layers go through a new
   `src/safe_filename.js` helper that rejects filenames containing
