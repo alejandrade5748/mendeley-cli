@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-13
+
 ### Security
 
 - `auth login` and `auth exchange` no longer print access or refresh tokens
@@ -109,5 +111,6 @@ remove-document` now uses the matching `FolderDocuments.remove()`
   browser-based auth.
 - Node.js 18+ support (ESM only).
 
-[Unreleased]: https://github.com/VictorTomaili/mendeley-cli/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/VictorTomaili/mendeley-cli/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/VictorTomaili/mendeley-cli/releases/tag/v0.1.0
 [1.0.0]: https://github.com/VictorTomaili/mendeley-cli/releases/tag/v1.0.0

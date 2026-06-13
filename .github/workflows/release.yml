@@ -42,7 +42,14 @@ jobs:
           echo "tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
 
       - name: Update package.json version
-        run: npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$CURRENT" != "$VERSION" ]; then
+            npm version "$VERSION" --no-git-tag-version
+          else
+            echo "package.json already at $VERSION"
+          fi
 
       - name: Generate changelog
         run: |
