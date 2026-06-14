@@ -21,9 +21,11 @@ const BASE_FIELDS = [
   'type',
   'source',
   'year',
+  'authors',
   'identifiers',
   'keywords',
   'abstract',
+  'created',
 ];
 const BIB_FIELDS = BaseBibView.fields();
 const CLIENT_FIELDS = [

@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `authors` and `created` are now included in every document's
+  JSON output (e.g. `documents get`, `documents list`, `library
+recent`, `catalog search`). Both are part of the core document
+  object the Mendeley API returns, but were missing from
+  `BASE_FIELDS` in `src/models/documents.js`, so `toJSON()` stripped
+  them — even with `--view all`. `authors` is serialized as an
+  array of `{first_name, last_name}` objects. (#114, #119)
 - The `File` model now exposes the canonical Mendeley API field
   names: `filename` (was wrongly `file_name`), `content_type` (was
   `mime_type`), plus the previously-missing `document_id`,
