@@ -82,14 +82,22 @@ const userBibGetters = {
 
 const userMethods = {
   async update(kwargs = {}) {
-    const rsp = await this.session.patch(`/documents/${this.id}`, {
+    await this.session.patch(`/documents/${this.id}`, {
       data: JSON.stringify(formatDocArgs(kwargs)),
       headers: {
         accept: this.contentType,
         'content-type': this.contentType,
       },
     });
-    return new UserAllDocument(this.session, await rsp.json());
+    // The PATCH response from the Mendeley API may not include all
+    // fields (especially `notes`, `authors` in certain views), so the
+    // caller cannot confirm the change from the response alone (#73).
+    // Re-fetch with view=all to return a complete record.
+    const params = new URLSearchParams({ view: 'all' });
+    const full = await this.session.get(`/documents/${this.id}?${params}`, {
+      headers: { accept: 'application/vnd.mendeley-document.1+json' },
+    });
+    return new UserAllDocument(this.session, await full.json());
   },
   async delete() {
     await this.session.delete(`/documents/${this.id}`);
