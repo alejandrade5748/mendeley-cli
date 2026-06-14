@@ -75,8 +75,19 @@ export class ListResource extends BaseResource {
    */
   async *iter(kwargs = {}) {
     let page = await this.list(kwargs);
+    let retried = false;
     while (page) {
       const items = await page.items;
+      // Guard against transient empty responses (#70): under rapid
+      // consecutive calls, the API sometimes returns an empty body
+      // for a populated collection. If the first page is empty and
+      // there is no "next" link (which would indicate more pages),
+      // retry the request once before accepting the empty result.
+      if (items.length === 0 && !page._links.next && !retried) {
+        retried = true;
+        page = await this.list(kwargs);
+        continue;
+      }
       for (const item of items) yield item;
       page = await page.next_page;
     }
