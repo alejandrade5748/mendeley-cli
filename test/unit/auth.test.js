@@ -169,6 +169,87 @@ test('refreshToken posts a refresh_token grant', async () => {
   }
 });
 
+test('refreshToken includes redirect_uri when supplied (#129)', async () => {
+  const originalFetch = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (url, opts) => {
+    captured = new URLSearchParams(opts.body);
+    return new Response(JSON.stringify({ access_token: 'new_tok' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  try {
+    await refreshToken({
+      tokenUrl: 'https://example.com/oauth/token',
+      refreshToken: 'rt',
+      clientId: 'cid',
+      redirectUri: 'http://localhost:11595/callback',
+    });
+    assert.equal(captured.get('redirect_uri'), 'http://localhost:11595/callback');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('refreshToken omits redirect_uri when not supplied (backward compat)', async () => {
+  const originalFetch = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (url, opts) => {
+    captured = new URLSearchParams(opts.body);
+    return new Response(JSON.stringify({ access_token: 'new_tok' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  try {
+    await refreshToken({
+      tokenUrl: 'https://example.com/oauth/token',
+      refreshToken: 'rt',
+      clientId: 'cid',
+    });
+    assert.equal(captured.get('redirect_uri'), null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('refreshToken for confidential client sends client_secret + Basic auth (#129)', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedBody;
+  let capturedHeaders;
+  globalThis.fetch = async (url, opts) => {
+    capturedBody = new URLSearchParams(opts.body);
+    capturedHeaders = opts.headers;
+    return new Response(JSON.stringify({ access_token: 'new_tok' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+  try {
+    await refreshToken({
+      tokenUrl: 'https://example.com/oauth/token',
+      refreshToken: 'rt',
+      clientId: 'cid',
+      clientSecret: 'secret',
+      redirectUri: 'http://localhost:11595/callback',
+    });
+    // Full documented auth-code refresh payload.
+    assert.equal(capturedBody.get('grant_type'), 'refresh_token');
+    assert.equal(capturedBody.get('refresh_token'), 'rt');
+    assert.equal(capturedBody.get('client_id'), 'cid');
+    assert.equal(capturedBody.get('client_secret'), 'secret');
+    assert.equal(capturedBody.get('redirect_uri'), 'http://localhost:11595/callback');
+    assert.match(
+      capturedHeaders.authorization,
+      /^Basic /,
+      'confidential client must use Basic auth',
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 /* ── OAuth state validation ───────────────────────────────────────── */
 
 function makeMendeley() {

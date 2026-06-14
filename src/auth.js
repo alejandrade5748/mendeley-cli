@@ -128,20 +128,32 @@ export async function fetchAuthorizationCodeToken({
 /**
  * Refresh an access token using a refresh_token grant.
  *
+ * Per the Mendeley authorization-code documentation, refresh requests
+ * include `redirect_uri` (#129). It is sent whenever the caller
+ * supplies one (both callers below always do for the auth-code flow).
+ *
  * @param {object} options
  * @param {string} options.tokenUrl
  * @param {string} options.refreshToken
  * @param {string} options.clientId
  * @param {string} [options.clientSecret]
+ * @param {string} [options.redirectUri]
  * @returns {Promise<object>} the refreshed token
  */
-export async function refreshToken({ tokenUrl, refreshToken, clientId, clientSecret }) {
+export async function refreshToken({
+  tokenUrl,
+  refreshToken,
+  clientId,
+  clientSecret,
+  redirectUri,
+}) {
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: refreshToken,
     client_id: clientId,
   });
   if (clientSecret) body.set('client_secret', clientSecret);
+  if (redirectUri) body.set('redirect_uri', redirectUri);
 
   const headers = {
     'content-type': 'application/x-www-form-urlencoded',
@@ -473,6 +485,7 @@ class AuthorizationCodeTokenRefresher {
       refreshToken: session.token.refresh_token,
       clientId: this.authenticator.mendeley.clientId,
       clientSecret: this.authenticator.mendeley.clientSecret,
+      redirectUri: this.authenticator.mendeley.redirectUri,
     });
     session.token = token;
   }

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Token refresh now includes `redirect_uri` in the POST body, as
+  documented for the Mendeley authorization-code flow. Previously
+  `refreshToken()` sent only `grant_type`, `refresh_token`, and
+  `client_id` (+ `client_secret`), omitting `redirect_uri`; if the
+  live API enforces the documented refresh shape, tokens obtained by
+  `auth login` could fail to refresh after expiry. Both callers — the
+  SDK `AuthorizationCodeTokenRefresher` and the CLI credentials
+  refresher — now pass `redirectUri`. `redirect_uri` is only sent
+  when supplied, so the public/PKCE and backward-compatible paths
+  are unaffected. (#129)
 - `catalog by-identifier` now validates that exactly one identifier
   flag is supplied. Previously, calling it with no flags hit the
   default `/catalog` list and let `identifierMatches()` (which skips
