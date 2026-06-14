@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Document models now expose every field documented in the
+  Mendeley API reference. Previously `toJSON()` silently dropped
+  many bibliographic, patent, and core fields because the model
+  field lists did not include them — so `documents get --view all`
+  was not actually "all", catalog-to-library copy flows lost
+  metadata, and BibTeX/JSON exports were incomplete. Added to the
+  field lists: core fields `profile_id`, `group_id`, `last_modified`;
+  bib fields `editors`, `accessed`, `citation_key`, `source_type`,
+  `language`, `short_title`, `reprint_edition`, `genre`, `country`,
+  `translators`, `series_editor`, `code`, `medium`, `user_context`,
+  `department`; and a new `patent` view (`patent_owner`,
+  `patent_application_number`, `patent_legal_status`). The `all`
+  view now includes patent fields too. (#128)
 - Token refresh now includes `redirect_uri` in the POST body, as
   documented for the Mendeley authorization-code flow. Previously
   `refreshToken()` sent only `grant_type`, `refresh_token`, and

@@ -12,6 +12,7 @@ import {
   UserBibDocument,
   UserClientDocument,
   UserDocument,
+  UserPatentDocument,
   UserTagsDocument,
 } from '../models/documents.js';
 import { addQueryParams, ListResource } from './base.js';
@@ -32,6 +33,7 @@ export class Documents extends DocumentsBase {
         bib: UserBibDocument,
         client: UserClientDocument,
         tags: UserTagsDocument,
+        patent: UserPatentDocument,
       }[view] || UserDocument
     );
   }

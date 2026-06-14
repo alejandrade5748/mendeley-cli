@@ -26,6 +26,10 @@ const BASE_FIELDS = [
   'keywords',
   'abstract',
   'created',
+  // Documented core fields previously omitted (#128).
+  'profile_id',
+  'group_id',
+  'last_modified',
 ];
 const BIB_FIELDS = BaseBibView.fields();
 const CLIENT_FIELDS = [
@@ -37,6 +41,9 @@ const CLIENT_FIELDS = [
   'hidden',
 ];
 const TAGS_FIELDS = ['tags'];
+
+/** Fields returned with view=patent (#128). */
+const PATENT_FIELDS = ['patent_owner', 'patent_application_number', 'patent_legal_status'];
 
 /** Format keyword args before they're sent over the wire. */
 function formatDocArgs(kwargs) {
@@ -233,13 +240,33 @@ apply(UserTagsDocument, userBaseGetters, userMethods);
 export class UserAllDocument extends BaseDocument {
   static contentType = 'application/vnd.mendeley-document.1+json';
   static fields() {
-    return [...new Set([...BASE_FIELDS, ...BIB_FIELDS, ...CLIENT_FIELDS, ...TAGS_FIELDS])];
+    return [
+      ...new Set([
+        ...BASE_FIELDS,
+        ...BIB_FIELDS,
+        ...CLIENT_FIELDS,
+        ...TAGS_FIELDS,
+        ...PATENT_FIELDS,
+      ]),
+    ];
   }
   _trashedType() {
     return TrashAllDocument;
   }
 }
 apply(UserAllDocument, userBaseGetters, userBibGetters, userMethods);
+
+/** User document requested with view=patent (#128). */
+export class UserPatentDocument extends BaseDocument {
+  static contentType = 'application/vnd.mendeley-document.1+json';
+  static fields() {
+    return [...new Set([...BASE_FIELDS, ...PATENT_FIELDS])];
+  }
+  _trashedType() {
+    return TrashPatentDocument;
+  }
+}
+apply(UserPatentDocument, userBaseGetters, userMethods);
 
 // ---------------------------------------------------------------------------
 // Trash documents
@@ -292,10 +319,30 @@ apply(TrashTagsDocument, userBaseGetters, trashMethods);
 export class TrashAllDocument extends BaseDocument {
   static contentType = 'application/vnd.mendeley-document.1+json';
   static fields() {
-    return [...new Set([...BASE_FIELDS, ...BIB_FIELDS, ...CLIENT_FIELDS, ...TAGS_FIELDS])];
+    return [
+      ...new Set([
+        ...BASE_FIELDS,
+        ...BIB_FIELDS,
+        ...CLIENT_FIELDS,
+        ...TAGS_FIELDS,
+        ...PATENT_FIELDS,
+      ]),
+    ];
   }
   _restoredType() {
     return UserAllDocument;
   }
 }
 apply(TrashAllDocument, userBaseGetters, userBibGetters, trashMethods);
+
+/** Trashed document requested with view=patent (#128). */
+export class TrashPatentDocument extends BaseDocument {
+  static contentType = 'application/vnd.mendeley-document.1+json';
+  static fields() {
+    return [...new Set([...BASE_FIELDS, ...PATENT_FIELDS])];
+  }
+  _restoredType() {
+    return UserPatentDocument;
+  }
+}
+apply(TrashPatentDocument, userBaseGetters, trashMethods);

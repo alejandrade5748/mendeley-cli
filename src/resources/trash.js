@@ -7,6 +7,7 @@ import {
   TrashBibDocument,
   TrashClientDocument,
   TrashDocument,
+  TrashPatentDocument,
   TrashTagsDocument,
 } from '../models/documents.js';
 import { DocumentsBase } from './base_documents.js';
@@ -25,6 +26,7 @@ export class Trash extends DocumentsBase {
         bib: TrashBibDocument,
         client: TrashClientDocument,
         tags: TrashTagsDocument,
+        patent: TrashPatentDocument,
       }[view] || TrashDocument
     );
   }

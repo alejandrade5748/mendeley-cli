@@ -76,11 +76,13 @@ export {
   TrashBibDocument,
   TrashClientDocument,
   TrashDocument,
+  TrashPatentDocument,
   TrashTagsDocument,
   UserAllDocument,
   UserBibDocument,
   UserClientDocument,
   UserDocument,
+  UserPatentDocument,
   UserTagsDocument,
 } from './models/documents.js';
 export { File } from './models/files.js';

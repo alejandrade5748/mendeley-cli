@@ -64,6 +64,23 @@ export class BaseBibView extends SessionResponseObject {
       'series',
       'chapter',
       'revision',
+      // Fields documented under the bib/all views but previously
+      // omitted (#128), silently dropped by toJSON().
+      'editors',
+      'accessed',
+      'citation_key',
+      'source_type',
+      'language',
+      'short_title',
+      'reprint_edition',
+      'genre',
+      'country',
+      'translators',
+      'series_editor',
+      'code',
+      'medium',
+      'user_context',
+      'department',
     ];
   }
 }
