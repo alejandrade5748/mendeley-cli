@@ -1,5 +1,14 @@
 # Security Policy
 
+> [!NOTE]
+> **`mendeley-cli` is an unofficial, community project.** It is not affiliated
+> with, endorsed by, or sponsored by Mendeley Ltd. or Elsevier. By using this
+> tool you accept the
+> [Mendeley Terms of Use](https://www.elsevier.com/legal/elsevier-mendeley-terms-and-conditions).
+> Official resources: [mendeley.com](https://www.mendeley.com),
+> [dev.mendeley.com](https://dev.mendeley.com/),
+> [mendeley-python-sdk](https://github.com/mendeley/mendeley-python-sdk).
+
 ## Supported Versions
 
 Use this section to tell people about which versions of your project are

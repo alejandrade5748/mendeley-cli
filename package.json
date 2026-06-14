@@ -1,7 +1,7 @@
 {
   "name": "mendeley-cli",
   "version": "0.1.1",
-  "description": "AI-agent-friendly CLI & JavaScript SDK for the Mendeley API",
+  "description": "Unofficial AI-agent-friendly CLI & JavaScript SDK for the Mendeley API (not affiliated with Mendeley Ltd./Elsevier)",
   "type": "module",
   "main": "src/index.js",
   "exports": {

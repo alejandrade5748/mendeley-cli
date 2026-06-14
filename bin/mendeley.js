@@ -25,8 +25,20 @@ import * as profileCmd from '../lib/cli/commands/profile.js';
 import * as trashCmd from '../lib/cli/commands/trash.js';
 import * as libraryCmd from '../lib/cli/commands/library.js';
 
-const root = new Command('mendeley', 'CLI for the Mendeley API, designed for AI agents');
+const root = new Command(
+  'mendeley',
+  'UNOFFICIAL CLI for the Mendeley API (not affiliated with Mendeley/Elsevier)',
+);
 root.isRoot = true;
+
+root.longDescription(
+  'Unofficial, community-maintained CLI and JavaScript SDK for the ' +
+    'Mendeley API. NOT affiliated with, endorsed by, or sponsored by ' +
+    'Mendeley Ltd. or Elsevier. By using this tool you accept the ' +
+    'Mendeley Terms of Use (https://www.elsevier.com/legal/elsevier-mendeley-terms-and-conditions). ' +
+    'Official resources: https://www.mendeley.com, ' +
+    'https://dev.mendeley.com/, https://github.com/mendeley/mendeley-python-sdk.',
+);
 
 root.option('--format <fmt>', 'output format (json, text, tsv, ids)', 'json');
 root.option('--quiet', 'suppress non-essential output', false);
@@ -131,6 +143,10 @@ libraryCmd.register(root);
 function renderSkill(root) {
   const lines = [];
   lines.push(`# mendeley CLI — Skill Reference`);
+  lines.push('');
+  lines.push(
+    `> **Unofficial, community-maintained tool.** NOT affiliated with, endorsed by, or sponsored by Mendeley Ltd. or Elsevier. By using it the user accepts the Mendeley Terms of Use (https://www.elsevier.com/legal/elsevier-mendeley-terms-and-conditions) and is responsible for their own usage. Official resources: https://www.mendeley.com, https://dev.mendeley.com/, https://github.com/mendeley/mendeley-python-sdk.`,
+  );
   lines.push('');
   lines.push(
     `You can manage a Mendeley library by running shell commands that start with \`mendeley\`.`,

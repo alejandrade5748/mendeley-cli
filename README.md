@@ -16,6 +16,26 @@ _Query 100 M+ academic papers, manage your library, export BibTeX — from the t
 
 ---
 
+> [!IMPORTANT]
+> **This is an unofficial, community-maintained project.**
+> `mendeley-cli` is **not** affiliated with, endorsed by, or sponsored by
+> Mendeley Ltd. or Elsevier. **Mendeley** and the Mendeley logo are trademarks
+> of Mendeley Ltd. All trademarks are the property of their respective owners.
+>
+> By using this tool you confirm that you have read and accept the
+> **[Mendeley Terms of Use](https://www.elsevier.com/legal/elsevier-mendeley-terms-and-conditions)**
+> and the **[Elsevier Website Terms & Conditions](https://www.elsevier.com/legal/elsevier-website-terms-and-conditions)**.
+> You are solely responsible for how you use this software and for complying
+> with Mendeley's usage policies, rate limits, and applicable laws.
+>
+> Looking for the **official** resources?
+>
+> - Official website: **https://www.mendeley.com**
+> - Official API docs: **https://dev.mendeley.com/**
+> - Official Python SDK: **https://github.com/mendeley/mendeley-python-sdk**
+
+---
+
 ## Why this exists
 
 The official Mendeley SDK is Python-only and hasn't been updated in years. This project provides:
@@ -331,3 +351,33 @@ or emailed to the maintainer.
 ## License
 
 [Apache-2.0](LICENSE)
+
+## Disclaimer
+
+`mendeley-cli` is an **unofficial, community-maintained** project. It is **not**
+affiliated with, endorsed by, or sponsored by **Mendeley Ltd.** or **Elsevier**.
+**Mendeley** and the Mendeley logo are trademarks of Mendeley Ltd.; all other
+trademarks are the property of their respective owners.
+
+By installing or using this software you confirm that you have read and accept
+the **[Mendeley Terms of Use](https://www.elsevier.com/legal/elsevier-mendeley-terms-and-conditions)**
+and the **[Elsevier Website Terms & Conditions](https://www.elsevier.com/legal/elsevier-website-terms-and-conditions)**.
+You are solely responsible for:
+
+- complying with Mendeley's usage policies, acceptable-use rules, and rate limits;
+- keeping your OAuth credentials, access tokens, and refresh tokens secure;
+- ensuring your use of the API and any retrieved content complies with applicable
+  copyrights, licences, and laws.
+
+The authors and contributors of this project provide the software **"as is"**
+(see the Apache-2.0 licence) and accept **no responsibility or liability** for
+any misuse, data loss, account suspension, or other consequence arising from
+its use.
+
+### Official resources
+
+If you need vendor-supported tooling, please use the official resources:
+
+- Official website: **<https://www.mendeley.com>**
+- Official API documentation (Developer Portal): **<https://dev.mendeley.com/>**
+- Official Python SDK: **<https://github.com/mendeley/mendeley-python-sdk>**
