@@ -55,7 +55,7 @@ test('files add-sticky-note posts to /annotations (not the blob endpoint)', asyn
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.ok(captured.annotationsPost, 'POST /annotations/ must be received');
+  assert.ok(captured.annotationsPost, 'POST /annotations must be received');
   // The annotation body must carry the file's document_id and filehash
   // resolved from the metadata, and the type/positions/text from the flags.
   const body = captured.annotationsPost;
@@ -91,7 +91,7 @@ test('files add-highlight posts to /annotations (not the blob endpoint)', async 
   );
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  assert.ok(captured.annotationsPost, 'POST /annotations/ must be received');
+  assert.ok(captured.annotationsPost, 'POST /annotations must be received');
   const body = captured.annotationsPost;
   assert.equal(body.document_id, 'doc-1');
   assert.equal(body.filehash, 'HASH-abc');
@@ -210,8 +210,8 @@ function startApiServer(captured) {
       return;
     }
 
-    // POST /annotations/ creates an annotation. Capture the body.
-    if (req.method === 'POST' && req.url === '/annotations/') {
+    // POST /annotations creates an annotation. Capture the body.
+    if (req.method === 'POST' && req.url === '/annotations') {
       let chunks = '';
       req.on('data', (c) => {
         chunks += c;

@@ -77,7 +77,7 @@ export class File extends SessionResponseObject {
       filehash: this.json.filehash,
       positions: [boundingBox],
     };
-    const rsp = await this.session.post('/annotations/', {
+    const rsp = await this.session.post('/annotations', {
       data: JSON.stringify(annotation),
       headers: {
         accept: Annotation.contentType,
@@ -94,7 +94,7 @@ export class File extends SessionResponseObject {
       positions: boundingBoxes.map((b) => (b.json ? b.json : b)),
       color: color.json ? color.json : color,
     };
-    const rsp = await this.session.post('/annotations/', {
+    const rsp = await this.session.post('/annotations', {
       data: JSON.stringify(annotation),
       headers: {
         accept: Annotation.contentType,

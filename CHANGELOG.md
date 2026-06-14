@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `files add-highlight` and `files add-sticky-note` now POST to
+  `/annotations` (no trailing slash). Previously they posted to
+  `/annotations/`, which the real Mendeley API rejects with 404/405 —
+  both annotation-creation commands were silently broken. (#117)
 - Unknown subcommands now exit 1 with a short one-line error
   (`unknown subcommand: "…"`) instead of silently printing the
   parent help text (~1.8 KB) and exiting 0. When a close candidate
