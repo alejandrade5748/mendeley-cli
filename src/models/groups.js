@@ -74,4 +74,26 @@ export class GroupMember extends LazyResponseObject {
   async _load() {
     return this.session.profiles.get(this.id);
   }
+
+  /**
+   * Synchronous plain-object view for JSON serialization (#16).
+   *
+   * The parent `LazyResponseObject.toJSON()` is async (it returns a
+   * Promise), so `JSON.stringify` would render `{}`. Expose the
+   * membership fields we already have synchronously, and include the
+   * profile if it has already been loaded.
+   */
+  toJSON() {
+    const out = {
+      id: this.id,
+      profile_id: this.memberJson.profile_id,
+      role: this.memberJson.role,
+      joined: this.memberJson.joined,
+    };
+    if (this._value) {
+      const profile = this._value.toJSON ? this._value.toJSON() : this._value;
+      out.profile = profile;
+    }
+    return out;
+  }
 }
