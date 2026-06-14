@@ -104,6 +104,103 @@ test('files add-highlight posts to /annotations (not the blob endpoint)', async 
   assert.equal(out.id, 'ann-1');
 });
 
+test('files add-sticky-note --positions sends text in the POST body (#127)', async () => {
+  const captured = { annotationsPost: null };
+  const { server, host } = await startApiServer(captured);
+  servers.push(server);
+  const { env } = createEnv(host);
+
+  const result = await runCli(
+    [
+      'files',
+      'add-sticky-note',
+      'file-1',
+      '--text',
+      'remember this',
+      '--positions',
+      '[{"top_left":{"x":5,"y":5},"bottom_right":{"x":5,"y":5},"page":1}]',
+    ],
+    { env },
+  );
+
+  assert.equal(result.code, 0, result.stderr || result.stdout);
+  assert.ok(captured.annotationsPost, 'POST /annotations must be received');
+  // #127 regression: the --positions path previously called addHighlight
+  // (which sends no text) and faked the text client-side. The server must
+  // actually receive the text.
+  assert.equal(
+    captured.annotationsPost.text,
+    'remember this',
+    'POST body must include the sticky-note text on the --positions path',
+  );
+  assert.deepEqual(captured.annotationsPost.positions, [
+    { top_left: { x: 5, y: 5 }, bottom_right: { x: 5, y: 5 }, page: 1 },
+  ]);
+});
+
+test('files add-sticky-note --color sends text in the POST body (#127)', async () => {
+  const captured = { annotationsPost: null };
+  const { server, host } = await startApiServer(captured);
+  servers.push(server);
+  const { env } = createEnv(host);
+
+  const result = await runCli(
+    [
+      'files',
+      'add-sticky-note',
+      'file-1',
+      '--text',
+      'colored note',
+      '--xpos',
+      '10',
+      '--ypos',
+      '20',
+      '--page',
+      '1',
+      '--color',
+      '{"r":255,"g":0,"b":0}',
+    ],
+    { env },
+  );
+
+  assert.equal(result.code, 0, result.stderr || result.stdout);
+  assert.ok(captured.annotationsPost, 'POST /annotations must be received');
+  assert.equal(
+    captured.annotationsPost.text,
+    'colored note',
+    'POST body must include the sticky-note text on the --color path',
+  );
+  assert.deepEqual(captured.annotationsPost.color, { r: 255, g: 0, b: 0 });
+});
+
+test('files add-sticky-note --positions --color sends text + color (#127)', async () => {
+  const captured = { annotationsPost: null };
+  const { server, host } = await startApiServer(captured);
+  servers.push(server);
+  const { env } = createEnv(host);
+
+  const result = await runCli(
+    [
+      'files',
+      'add-sticky-note',
+      'file-1',
+      '--text',
+      'full',
+      '--positions',
+      '[{"top_left":{"x":1,"y":2},"bottom_right":{"x":3,"y":4},"page":7}]',
+      '--color',
+      '{"r":0,"g":255,"b":0}',
+    ],
+    { env },
+  );
+
+  assert.equal(result.code, 0, result.stderr || result.stdout);
+  const body = captured.annotationsPost;
+  assert.equal(body.text, 'full');
+  assert.deepEqual(body.color, { r: 0, g: 255, b: 0 });
+  assert.equal(body.positions[0].page, 7);
+});
+
 test('files add-sticky-note fails cleanly when the file id is not in the library', async () => {
   const captured = { annotationsPost: null };
   const { server, host } = await startApiServer(captured);

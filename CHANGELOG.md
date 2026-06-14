@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `files add-sticky-note` now genuinely persists the note `text`
+  on the server for the `--positions` and `--color` code paths.
+  Previously those paths called `File.addHighlight()` (which sends
+  no text) and then mutated the returned annotation's JSON
+  client-side (`ann.json.text = flags.text`), so the API never
+  received the text while the CLI falsely displayed it. Added a
+  unified `File.addAnnotation({ text, positions, color })` model
+  method as the single primitive; `addStickyNote` and
+  `addHighlight` now delegate to it, and the CLI no longer fakes
+  persisted fields. (#127)
 - The `Annotation` model now exposes the full set of fields the
   Mendeley API returns: `positions`, `color`, `document_id`,
   `filehash`, `profile_id`, `created`, and `last_modified` (in

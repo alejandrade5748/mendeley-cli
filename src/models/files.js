@@ -80,31 +80,31 @@ export class File extends SessionResponseObject {
   async addStickyNote(text, x, y, page) {
     const position = { x, y };
     const boundingBox = { top_left: position, bottom_right: position, page };
-    const annotation = {
-      document_id: (await this.document()).id,
-      text,
-      filehash: this.json.filehash,
-      positions: [boundingBox],
-    };
-    const rsp = await this.session.post('/annotations', {
-      data: JSON.stringify(annotation),
-      headers: {
-        accept: Annotation.contentType,
-        'content-type': Annotation.contentType,
-      },
-    });
-    return new Annotation(this.session, await rsp.json());
+    return this.addAnnotation({ text, positions: [boundingBox] });
   }
 
-  async addHighlight(boundingBoxes, color) {
+  /**
+   * Create a generic annotation attached to this file. This is the
+   * single primitive used by {@link addStickyNote} and
+   * {@link addHighlight}; `text` is what distinguishes a sticky note
+   * from a highlight (#127). `text` and `color` are only included in
+   * the POST body when supplied, so callers can omit either.
+   *
+   * @param {object} opts
+   * @param {string} [opts.text]     sticky-note text (omit for a highlight)
+   * @param {object[]} opts.positions bounding boxes (BoundingBox or raw)
+   * @param {object} [opts.color]     {r,g,b} (Color model or raw object)
+   * @returns {Promise<Annotation>}
+   */
+  async addAnnotation({ text, positions, color } = {}) {
     const annotation = {
       document_id: (await this.document()).id,
       filehash: this.json.filehash,
-      positions: boundingBoxes.map((b) => (b.json ? b.json : b)),
+      positions: positions.map((b) => (b.json ? b.json : b)),
     };
-    // Only include color when one was supplied; a Color model exposes
-    // .json, a plain {r,g,b} object is used as-is. Guard against
-    // undefined/null so callers can omit the color (#118).
+    if (text !== undefined && text !== null) {
+      annotation.text = text;
+    }
     if (color) {
       annotation.color = color.json ? color.json : color;
     }
@@ -116,5 +116,9 @@ export class File extends SessionResponseObject {
       },
     });
     return new Annotation(this.session, await rsp.json());
+  }
+
+  async addHighlight(boundingBoxes, color) {
+    return this.addAnnotation({ positions: boundingBoxes, color });
   }
 }
