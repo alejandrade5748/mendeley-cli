@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-14
+
+### ⚠️ Potentially breaking output change
+
+- **All list commands now emit a normalized `{ "count": N, "items": [...] }`
+  envelope** in `json` mode, instead of a bare top-level array. This affects
+  `documents list`, `documents list --all`, `documents search ... --all`,
+  `documents annotations <id>`, `folders list`, `groups list`, `groups members`,
+  `annotations list`, `trash list`, `files list`, `library recent`, and
+  `library by-tag`. The `--format ids`, `--format tsv`, and `--format text`
+  modes are unchanged. Scripts that consumed the raw arrays should read
+  `.items` (and may now use `.count`). (#17, #88, #91, #92, #93, #97)
+
+### Added
+
+- An **unofficial-tool disclaimer** now appears in the README (top and a
+  dedicated section), the `package.json` description, the `--help` banner,
+  the `--skill` banner, and `SECURITY.md`, making clear the project is
+  community-maintained and not affiliated with Mendeley Ltd. or Elsevier.
+  (#87)
+
+### Fixed
+
+- `--version` now reports the version synced from `package.json` instead of a
+  hardcoded stale value. (#89)
+- A **libuv crash (exit 127)** on `catalog lookup` and other multi-request
+  error paths. `process.exit()` is no longer called mid-stack; CLI failures now
+  throw a `CliExitError` sentinel caught at the top level, which sets
+  `process.exitCode` and lets the event loop drain naturally. (#90)
+- The **empty-collection retry** logic (#70) no longer doubles API requests
+  for legitimately empty results. A retry now happens only when the API does
+  not explicitly report `count=0` (i.e. the `Mendeley-Count` header is
+  absent); when the header is present and zero, the empty result is trusted.
+  (#94)
+- `catalog by-identifier` now validates that the returned record's
+  `identifiers` actually contains the requested arXiv/DOI/ISBN, instead of
+  returning an unrelated match. (#71)
+- `documents update` now re-fetches the complete record with `view=all` after
+  the PATCH, so fields like `notes` are no longer missing from the response.
+  (#73)
+- `documents add-note` now returns the real annotation id, not the document
+  id, working around an API quirk where the POST response echoes the document
+  id. (#12)
+- Downloads and library exports now **auto-create destination directories**
+  instead of failing with `ENOENT` when the parent directory does not exist.
+  (#13)
+- `--limit` is now validated consistently as a positive integer across all
+  commands, and was added to `groups documents` and `groups files` where it
+  was missing. (#15, #18)
+- Missing flag values and invalid `--data` JSON now produce clean
+  `{ "ok": false, "error": "..." }` messages instead of stack traces. (#14)
+- `library dedupe --by` now validates its argument against the allowed set,
+  and create/update commands reject empty bodies. (#20, #21)
+- `groups members` now renders members correctly (synchronous `toJSON`), and
+  `folders list` forwards the `--group` option. (#16, #19)
+- Unknown CLI flags are now rejected with a **"did you mean?"** suggestion
+  (Levenshtein edit-distance matching), and transient empty first pages are
+  retried once. (#11, #70)
+- `page.items` is now awaited before reading `page.count`. (#10)
+- The `.all()` paginator is wired up for documents, and kebab-case flag
+  access is fixed. (#6, #9)
+- `folders add-document` now handles `204 No Content` responses correctly.
+  (#69)
+
 ## [0.1.1] - 2026-06-13
 
 ### Changed
