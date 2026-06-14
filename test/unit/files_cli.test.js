@@ -142,7 +142,9 @@ test('files get returns the metadata JSON (not the blob)', async () => {
   assert.equal(result.code, 0, result.stderr || result.stdout);
   const out = JSON.parse(result.stdout);
   assert.equal(out.id, 'file-1');
-  assert.equal(out.file_name, 'paper.pdf');
+  assert.equal(out.filename, 'paper.pdf');
+  assert.equal(out.content_type, 'application/pdf');
+  assert.equal(out.document_id, 'doc-1');
 });
 
 function createEnv(host) {
@@ -190,8 +192,8 @@ function startApiServer(captured) {
         JSON.stringify([
           {
             id: 'file-1',
-            file_name: 'paper.pdf',
-            mime_type: 'application/pdf',
+            filename: 'paper.pdf',
+            content_type: 'application/pdf',
             size: 12345,
             filehash: 'HASH-abc',
             document_id: 'doc-1',

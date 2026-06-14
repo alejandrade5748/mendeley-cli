@@ -17,7 +17,7 @@ import { File } from '../../src/models/files.js';
 function makeFile({ id = 'file-1', fileName = 'paper.pdf' } = {}) {
   return new File(
     { get: async () => {} },
-    { id, file_name: fileName, filehash: 'hash', mime_type: 'application/pdf', size: 100 },
+    { id, filename: fileName, filehash: 'hash', content_type: 'application/pdf', size: 100 },
   );
 }
 
@@ -71,7 +71,7 @@ test('File.download rejects a Content-Disposition with an absolute path', async 
   }
 });
 
-test('File.download falls back to metadata file_name when no Content-Disposition', async () => {
+test('File.download falls back to metadata filename when no Content-Disposition', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'mendeley-fd-fb-'));
   try {
     const f = makeFile({ id: 'file-1', fileName: 'meta-name.pdf' });

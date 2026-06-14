@@ -17,7 +17,16 @@ export class File extends SessionResponseObject {
   }
 
   static fields() {
-    return ['id', 'size', 'file_name', 'mime_type', 'filehash'];
+    return [
+      'id',
+      'size',
+      'filename',
+      'content_type',
+      'filehash',
+      'document_id',
+      'extension',
+      'created',
+    ];
   }
 
   /**
@@ -44,7 +53,7 @@ export class File extends SessionResponseObject {
    * Download the file to `directory`.  Returns the local path.
    *
    * The filename is taken from the response's `Content-Disposition`
-   * header (preferred) or the file's metadata `file_name` field.  In
+   * header (preferred) or the file's metadata `filename` field.  In
    * either case the name is validated by `safeFilename` and the
    * resolved path is verified to stay inside `directory`; absolute
    * paths and path-traversal segments are rejected before any bytes
@@ -53,7 +62,7 @@ export class File extends SessionResponseObject {
   async download(directory) {
     const rsp = await this.session.get(`/files/${this.id}`, { stream: true });
     const headerName = parseContentDispositionFilename(rsp.headers.get('content-disposition'));
-    const rawName = headerName || this.json.file_name || `file-${this.id}`;
+    const rawName = headerName || this.json.filename || `file-${this.id}`;
     const filename = safeFilename(rawName);
     const path = safeJoin(directory, filename);
 
