@@ -49,6 +49,14 @@ export class DocumentsBase extends GetByIdResource {
     });
   }
 
+  async all(kwargs = {}) {
+    return ListResource.prototype.all.call(this, {
+      ...kwargs,
+      group_id: this.groupId,
+      folder_id: this.folderId,
+    });
+  }
+
   getLazy(id, kwargs = {}) {
     return GetByIdResource.prototype.getLazy.call(this, id, kwargs);
   }
