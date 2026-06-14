@@ -32,6 +32,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   underlying error code and an actionable hint. Per-call retry
   config is available via the `retry` option on
   `MendeleySession.request()`. (#103)
+- `documents create` now validates the `authors` and `editors`
+  fields before sending the request. Previously, passing a string
+  (or a single object) as `authors` crashed with a bare
+  `out.authors.map is not a function` TypeError. Now, the SDK (#104):
+  - throws an actionable `MendeleyException` for inputs it cannot
+    interpret (e.g. `"authors": 42`, `"authors": [true]`, or an
+    empty entry);
+  - accepts an array of strings and splits each one into a
+    `{first_name, last_name}` object — `"First Last"` splits on
+    the last space; `"Surname, First"` splits on the first comma;
+    `"Surname, F. M."` (initials) works too;
+  - accepts a single string and treats it as a one-element list
+    (so `"authors": "Ada Lovelace"` is equivalent to
+    `["Ada Lovelace"]`);
+  - `documents create --help` now documents the common body keys
+    (`title`, `type`, `authors`, `editors`, `identifiers`, `tags`,
+    ...) and shows an `authors` example.
 
 ### Added
 
