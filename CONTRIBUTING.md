@@ -84,6 +84,10 @@ mendeley --skill > MENDELEY_SKILL.md   # if you have a global link
   templates.
 - **Security issues**: do **not** open a public issue — see
   [SECURITY.md](SECURITY.md).
+- **Filing from an LLM / coding agent?** Read
+  [`.github/LLM_ISSUE_REPORTING.md`](.github/LLM_ISSUE_REPORTING.md) first — it is
+  a machine-actionable checklist covering triage, data collection, redaction,
+  and the exact `gh` commands to file a well-formed report.
 
 ## Submitting pull requests
 

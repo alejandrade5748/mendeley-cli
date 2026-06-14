@@ -5,7 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Describe the feature you'd like. For security issues, see
+        Describe the feature you'd like. **Filing from an LLM or coding agent?**
+        See [LLM_ISSUE_REPORTING.md](../../blob/main/.github/LLM_ISSUE_REPORTING.md)
+        for triage and redaction guidance. For security issues, see
         [SECURITY.md](../../blob/main/SECURITY.md) instead.
 
   - type: textarea
