@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Unknown subcommands now exit 1 with a short one-line error
+  (`unknown subcommand: "…"`) instead of silently printing the
+  parent help text (~1.8 KB) and exiting 0. When a close candidate
+  exists, a `did you mean: <name>?` line is added: `mendeley
+  library stat` suggests `stats`; `mendeley library by-identifier`
+  (a typo coming from `catalog by-identifier`) suggests `by-tag` via
+  the shared `by-` prefix. The error always points at
+  `mendeley <cmd> --help`. A real subcommand at the top level (e.g.
+  `mendeley library`, `mendeley library --help`) is unaffected.
+  (#106)
 - `catalog byIdentifier` (used by `library add-by-doi` / `add-by-arxiv`)
   now normalises DOIs (strips `https://doi.org/`, `http://dx.doi.org/`,
   and `doi:` prefixes; lower-cases the registrant prefix) and arXiv
