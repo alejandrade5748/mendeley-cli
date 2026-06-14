@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `catalog byIdentifier` (used by `library add-by-doi` / `add-by-arxiv`)
+  now normalises DOIs (strips `https://doi.org/`, `http://dx.doi.org/`,
+  and `doi:` prefixes; lower-cases the registrant prefix) and arXiv
+  ids (strips `arXiv:`, the `cs.LG/` category prefix, and the `vN`
+  version suffix) before comparing. Previously, a DOI or arXiv id
+  whose stored form differed in any of these ways was rejected with
+  "Catalog document not found" even when the record was a real match.
+  When the rejection still happens, the error now includes the title
+  and identifiers of the record that *was* found, so the user can
+  decide whether to fall back to `mendeley library add-by-catalog-id`
+  (see below). (#101)
+
+### Added
+
+- `mendeley library add-by-catalog-id <id>` adds a document to the
+  user library directly from a catalog id (e.g. one returned by
+  `mendeley catalog search`), without going through a DOI/arXiv
+  lookup. Useful as a fallback when the identifier-lookup path
+  rejects a real catalog hit, and as a faster path for the common
+  "I just searched the catalog, now add this one" workflow. (#102)
+
 ## [0.2.0] - 2026-06-14
 
 ### ⚠️ Potentially breaking output change

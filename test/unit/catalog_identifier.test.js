@@ -9,7 +9,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { Catalog, identifierMatches } from '../../src/resources/catalog.js';
+import { Catalog, identifierMatches, normaliseIdentifier } from '../../src/resources/catalog.js';
 
 function makeFakeSession(responses) {
   return {
@@ -90,7 +90,16 @@ describe('Catalog.byIdentifier validation (#71)', () => {
     const catalog = new Catalog(session);
     await assert.rejects(
       () => catalog.byIdentifier({ arxiv: '1706.03762' }),
-      /not found.*matched the requested identifier/i,
+      (err) => {
+        // Updated for #101: error now includes the requested id and the
+        // title of the found record, rather than a generic "matched"
+        // phrase. The original "Catalog document not found" prefix is
+        // preserved.
+        assert.match(err.message, /Catalog document not found/);
+        assert.match(err.message, /arxiv=1706\.03762/);
+        assert.match(err.message, /LANL Student Symposium Poster 2019/);
+        return true;
+      },
     );
   });
 
@@ -111,6 +120,89 @@ describe('Catalog.byIdentifier validation (#71)', () => {
     await assert.rejects(
       () => catalog.byIdentifier({ doi: '10.5555/12345' }),
       /not found.*matched/i,
+    );
+  });
+});
+
+describe('normaliseIdentifier (#101)', () => {
+  test('strips https://doi.org/ prefix from DOIs', () => {
+    assert.equal(normaliseIdentifier('doi', 'https://doi.org/10.5555/X'), '10.5555/X');
+    assert.equal(normaliseIdentifier('doi', 'http://dx.doi.org/10.5555/X'), '10.5555/X');
+  });
+  test('strips doi: scheme prefix', () => {
+    assert.equal(normaliseIdentifier('doi', 'doi:10.5555/X'), '10.5555/X');
+  });
+  test('lower-cases the DOI registrant prefix', () => {
+    assert.equal(normaliseIdentifier('doi', '10.5555/ABC-XYZ'), '10.5555/ABC-XYZ');
+  });
+  test('strips arXiv version suffix', () => {
+    assert.equal(normaliseIdentifier('arxiv', '1706.03762v3'), '1706.03762');
+    assert.equal(normaliseIdentifier('arxiv', '1810.04805v1'), '1810.04805');
+  });
+  test('strips arXiv category prefix', () => {
+    assert.equal(normaliseIdentifier('arxiv', 'cs.LG/1706.03762'), '1706.03762');
+    assert.equal(normaliseIdentifier('arxiv', 'cs.CL/1810.04805v2'), '1810.04805');
+  });
+  test('strips arXiv: scheme prefix', () => {
+    assert.equal(normaliseIdentifier('arxiv', 'arXiv:1706.03762'), '1706.03762');
+  });
+  test('strips ISBN hyphens and spaces, upper-cases', () => {
+    assert.equal(normaliseIdentifier('isbn', '978-0-13-468599-1'), '9780134685991');
+    assert.equal(normaliseIdentifier('isbn', '0 306 40615 2'), '0306406152');
+  });
+  test('strips ISSN hyphens', () => {
+    assert.equal(normaliseIdentifier('issn', '0378-5955'), '03785955');
+  });
+  test('passes through other types unchanged', () => {
+    assert.equal(normaliseIdentifier('pmid', '12345'), '12345');
+  });
+});
+
+describe('identifierMatches with normalisation (#101)', () => {
+  test('accepts DOI stored with https://doi.org/ prefix', () => {
+    const record = { identifiers: { doi: ['https://doi.org/10.5555/X'] } };
+    assert.equal(identifierMatches(record, { doi: '10.5555/X' }), true);
+  });
+  test('accepts arXiv id stored with version suffix', () => {
+    const record = { identifiers: { arxiv: ['1706.03762v3'] } };
+    assert.equal(identifierMatches(record, { arxiv: '1706.03762' }), true);
+  });
+  test('accepts arXiv id stored with category prefix', () => {
+    const record = { identifiers: { arxiv: ['cs.LG/1706.03762'] } };
+    assert.equal(identifierMatches(record, { arxiv: '1706.03762' }), true);
+  });
+  test('accepts ISBN stored with hyphens', () => {
+    const record = { identifiers: { isbn: ['978-0-13-468599-1'] } };
+    assert.equal(identifierMatches(record, { isbn: '9780134685991' }), true);
+  });
+  test('still rejects a genuinely wrong identifier', () => {
+    const record = { identifiers: { doi: ['10.9999/other'] } };
+    assert.equal(identifierMatches(record, { doi: '10.5555/X' }), false);
+  });
+});
+
+describe('Catalog.byIdentifier error message includes the found record (#101)', () => {
+  test('error message includes the title and identifiers of the record that was found', async () => {
+    const session = makeFakeSession([
+      [
+        {
+          id: 'cat-4',
+          title: 'Some Other Paper',
+          identifiers: { doi: ['10.9999/other'] },
+        },
+      ],
+    ]);
+    const catalog = new Catalog(session);
+    await assert.rejects(
+      () => catalog.byIdentifier({ doi: '10.5555/X' }),
+      (err) => {
+        // The error must mention both the requested id and the found title,
+        // so a user has actionable context.
+        assert.match(err.message, /doi=10\.5555\/X/);
+        assert.match(err.message, /Some Other Paper/);
+        assert.match(err.message, /10\.9999\/other/);
+        return true;
+      },
     );
   });
 });
