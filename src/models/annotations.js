@@ -11,8 +11,31 @@ export class Annotation extends SessionResponseObject {
     return this.constructor.contentType;
   }
 
+  /**
+   * Fields exposed in JSON output. Mirrors the documented
+   * "Annotation attributes" table from the Mendeley API reference
+   * (id, created, last_modified, color, text, positions,
+   * privacy_level, document_id, profile_id, filehash) plus `type`,
+   * which the API returns in practice. toJSON() reads these raw
+   * from the response JSON, so `positions` is emitted as the raw
+   * array of bounding boxes, `color` as a raw {r,g,b} object, and
+   * `created`/`last_modified` as ISO strings (consistent with how
+   * the document model emits `authors`).
+   */
   static fields() {
-    return ['id', 'text', 'privacy_level', 'type'];
+    return [
+      'id',
+      'text',
+      'type',
+      'privacy_level',
+      'positions',
+      'color',
+      'document_id',
+      'filehash',
+      'profile_id',
+      'created',
+      'last_modified',
+    ];
   }
 
   get created() {

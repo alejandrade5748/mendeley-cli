@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The `Annotation` model now exposes the full set of fields the
+  Mendeley API returns: `positions`, `color`, `document_id`,
+  `filehash`, `profile_id`, `created`, and `last_modified` (in
+  addition to the previously-listed `id`, `text`, `type`,
+  `privacy_level`). Before this fix, `annotations list`, `annotations
+get`, and the output of `files add-highlight` / `files add-sticky-note`
+  silently dropped the bounding boxes, color, timestamps, and document
+  linkage. (#124)
 - `files add-sticky-note` now accepts the same `--positions <json>`
   and `--color <json>` flags as `files add-highlight`, so the two
   annotation commands share a consistent interface. The convenience
