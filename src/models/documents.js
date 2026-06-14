@@ -128,7 +128,26 @@ const userMethods = {
         'content-type': Annotation.contentType,
       },
     });
-    return new Annotation(this.session, await rsp.json());
+    const body = await rsp.json();
+    // The Mendeley API may return the document id as the annotation's
+    // top-level `id` for type=note annotations (#12). When this
+    // happens, follow up with a list query to find the real annotation
+    // (the most recently created note for this document with matching
+    // text) and return it instead.
+    if (body.id === this.id || !body.id) {
+      const listRsp = await this.session.get(
+        `/annotations?document_id=${encodeURIComponent(this.id)}&type=note`,
+        { headers: { accept: Annotation.contentType } },
+      );
+      const candidates = await listRsp.json();
+      // Prefer the most recent note whose text matches.
+      const match = candidates.find((c) => c.text === text);
+      if (match) return new Annotation(this.session, match);
+      // Fallback: last in the list (usually most recent).
+      if (candidates.length > 0)
+        return new Annotation(this.session, candidates[candidates.length - 1]);
+    }
+    return new Annotation(this.session, body);
   },
 };
 
