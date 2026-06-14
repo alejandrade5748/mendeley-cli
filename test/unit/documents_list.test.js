@@ -35,12 +35,13 @@ test('documents list --all traverses all pages (#6)', async () => {
   const result = await runCli(['documents', 'list', '--all'], { env });
 
   assert.equal(result.code, 0, result.stderr || result.stdout);
-  // The output must be a bare array (not { count, items }) for --all.
+  // The output must be the standard { count, items } envelope (#17).
   const out = JSON.parse(result.stdout);
-  assert.ok(Array.isArray(out), 'must be an array');
-  assert.equal(out.length, 3, 'must contain all items across pages');
-  assert.equal(out[0].id, 'd1');
-  assert.equal(out[2].id, 'd3');
+  assert.ok(out && typeof out === 'object' && !Array.isArray(out), 'must be an envelope object');
+  assert.ok(Array.isArray(out.items), 'items must be an array');
+  assert.equal(out.items.length, 3, 'must contain all items across pages');
+  assert.equal(out.items[0].id, 'd1');
+  assert.equal(out.items[2].id, 'd3');
 });
 
 test('documents list passes --modified-since as a query param (#9)', async () => {
