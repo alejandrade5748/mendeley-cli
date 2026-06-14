@@ -80,10 +80,16 @@ export class ListResource extends BaseResource {
       const items = await page.items;
       // Guard against transient empty responses (#70): under rapid
       // consecutive calls, the API sometimes returns an empty body
-      // for a populated collection. If the first page is empty and
-      // there is no "next" link (which would indicate more pages),
-      // retry the request once before accepting the empty result.
-      if (items.length === 0 && !page._links.next && !retried) {
+      // for a populated collection. Retry once when there's evidence
+      // the result should be non-empty — either the mendeley-count
+      // header reported > 0, or the header was absent (can't tell).
+      // Skip the retry when the API explicitly reported count=0 (#94).
+      if (
+        items.length === 0 &&
+        !page._links.next &&
+        !retried &&
+        (page.count > 0 || !page._countHeaderPresent)
+      ) {
         retried = true;
         page = await this.list(kwargs);
         continue;

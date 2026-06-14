@@ -79,6 +79,32 @@ test('list retries once on transient empty first page (#70)', async () => {
   assert.ok(out.length > 0 && out !== '[]', 'output must not be empty');
 });
 
+test('list does NOT retry when mendeley-count header explicitly says 0 (#94)', async () => {
+  const captured = { listRequests: 0 };
+  const { server, host } = await startApiServer(captured, { countZero: true });
+  servers.push(server);
+  const { env } = createEnv(host);
+
+  const result = await runCli(['documents', 'list', '--all', '--format', 'ids'], { env });
+
+  assert.equal(result.code, 0, result.stderr || result.stdout);
+  // Must NOT retry — the API explicitly said count=0.
+  assert.equal(captured.listRequests, 1, `expected 1 request, got ${captured.listRequests}`);
+});
+
+test('list retries when count header is absent (preserves #70)', async () => {
+  const captured = { listRequests: 0 };
+  const { server, host } = await startApiServer(captured, { emptyFirst: true });
+  servers.push(server);
+  const { env } = createEnv(host);
+
+  const result = await runCli(['documents', 'list', '--all', '--format', 'ids'], { env });
+
+  assert.equal(result.code, 0, result.stderr || result.stdout);
+  // Must retry — no count header means we can't tell if the empty is legit.
+  assert.ok(captured.listRequests >= 2, `expected >= 2 requests, got ${captured.listRequests}`);
+});
+
 /* ── helpers ────────────────────────────────────────────────────── */
 
 function createEnv(host) {
@@ -109,12 +135,20 @@ function createEnv(host) {
   return { env, home };
 }
 
-function startApiServer(captured, { emptyFirst = false } = {}) {
+function startApiServer(captured, { emptyFirst = false, countZero = false } = {}) {
   const server = createServer((req, res) => {
     const url = req.url.split('?')[0];
 
     if (req.method === 'GET' && url === '/documents') {
       captured.listRequests = (captured.listRequests || 0) + 1;
+
+      // #94: API explicitly says count=0 — should NOT trigger a retry.
+      if (countZero) {
+        res.setHeader('content-type', 'application/vnd.mendeley-document.1+json');
+        res.setHeader('mendeley-count', '0');
+        res.end(JSON.stringify([]));
+        return;
+      }
 
       // Simulate a transient empty response: return [] on the first
       // request, real data on the second.

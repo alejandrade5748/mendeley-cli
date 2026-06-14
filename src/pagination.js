@@ -43,12 +43,15 @@ export class Page {
 
     if (count !== undefined && count !== null) {
       this.count = count;
+      this._countHeaderPresent = true;
     } else {
       const headerCount = rsp.headers.get('mendeley-count');
       if (headerCount) {
         this.count = parseInt(headerCount, 10);
+        this._countHeaderPresent = true;
       } else {
         this.count = 0; // filled in lazily once items are read
+        this._countHeaderPresent = false;
       }
     }
   }
