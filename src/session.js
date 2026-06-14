@@ -3,7 +3,8 @@
  * accessing the API once you have an access token.
  */
 
-import { MendeleyException } from './exception.js';
+import { MendeleyApiException, MendeleyException } from './exception.js';
+import { retryWithBackoff } from './retry.js';
 import { Annotations } from './resources/annotations.js';
 import { Catalog } from './resources/catalog.js';
 import { Documents } from './resources/documents.js';
@@ -83,6 +84,11 @@ export class MendeleySession {
    * Make an authenticated request against the API.  This is the lowest
    * level method exposed on the session; resources call it for you.
    *
+   * Retries on transient errors (#103): HTTP 429, 5xx, and common
+   * network errors (`fetch failed`, `ECONNRESET`, `ETIMEDOUT`, ...).
+   * Uses exponential backoff. 4xx errors (except 408, 429) are *not*
+   * retried — they are client errors.
+   *
    * @param {string} method HTTP method
    * @param {string} url path or full URL
    * @param {object} [opts]
@@ -92,10 +98,14 @@ export class MendeleySession {
    * @param {boolean} [opts.stream=false] return a `Response` instead of
    *   consuming the body
    * @param {boolean} [opts.allowRedirects=true]
+   * @param {object} [opts.retry]  override the retry config for this call
+   * @param {number} [opts.retry.maxAttempts]
+   * @param {number} [opts.retry.baseMs]
+   * @param {number} [opts.retry.maxMs]
    * @returns {Promise<Response>} the raw fetch Response
    */
   async request(method, url, opts = {}) {
-    const { data = null, headers = {}, query, stream = false, allowRedirects = true } = opts;
+    const { data = null, headers = {}, query, stream = false, allowRedirects = true, retry } = opts;
     const fullUrl = joinUrl(this.host, url, query);
 
     const finalHeaders = {
@@ -106,27 +116,37 @@ export class MendeleySession {
       finalHeaders.authorization = `Bearer ${this.accessToken}`;
     }
 
-    let rsp;
-    try {
-      rsp = await this._fetch(method, fullUrl, data, finalHeaders, allowRedirects);
-    } catch (err) {
-      throw err;
-    }
+    // Wrap the per-attempt cycle in a retry layer (#103).  Each
+    // attempt does: fetch -> maybe 401 refresh -> raise on !ok.  Any
+    // thrown MendeleyApiException with a retryable status (or any
+    // transient network error) is retried with backoff.
+    const self = this;
+    return retryWithBackoff(async () => {
+      let rsp;
+      try {
+        rsp = await self._fetch(method, fullUrl, data, finalHeaders, allowRedirects);
+      } catch (err) {
+        // Surface the error to the retry layer. Mark it transient so
+        // the retry layer can decide (it always retries network errors
+        // up to maxAttempts).
+        throw err;
+      }
 
-    // Token expired -> try a refresh once.
-    if (rsp.status === 401 && this.refresher) {
-      await this.refresher.refresh(this);
-      finalHeaders.authorization = `Bearer ${this.accessToken}`;
-      rsp = await this._fetch(method, fullUrl, data, finalHeaders, allowRedirects);
-    }
+      // Token expired -> try a refresh once, then re-fetch.
+      if (rsp.status === 401 && self.refresher) {
+        await self.refresher.refresh(self);
+        finalHeaders.authorization = `Bearer ${self.accessToken}`;
+        rsp = await self._fetch(method, fullUrl, data, finalHeaders, allowRedirects);
+      }
 
-    if (stream) {
-      // Caller is responsible for consuming the body.
+      if (stream) {
+        // Caller is responsible for consuming the body.
+        if (!rsp.ok) await raiseApiError(rsp);
+        return rsp;
+      }
       if (!rsp.ok) await raiseApiError(rsp);
       return rsp;
-    }
-    if (!rsp.ok) await raiseApiError(rsp);
-    return rsp;
+    }, retry);
   }
 
   async _fetch(method, fullUrl, data, headers, allowRedirects) {
@@ -195,15 +215,25 @@ async function raiseApiError(rsp) {
     raw = '';
   }
   let message = raw;
+  let body = null;
   if (raw) {
     try {
-      const body = JSON.parse(raw);
+      body = JSON.parse(raw);
       message = body.message || body.error_description || body.error || raw;
     } catch {
       // Not JSON; keep the raw text.
     }
   }
-  throw new MendeleyException(
+  // Use MendeleyApiException so the retry layer (#103) and any
+  // downstream code can inspect .status and .body. It still extends
+  // MendeleyException, so `catch (err instanceof MendeleyException)`
+  // keeps working.
+  const err = new MendeleyApiException(
     `The Mendeley API returned an error (status: ${rsp.status}, message: ${message})`,
+    rsp.status,
+    body,
   );
+  // Attach the response so the retry layer can read Retry-After.
+  err.lastResponse = rsp;
+  throw err;
 }

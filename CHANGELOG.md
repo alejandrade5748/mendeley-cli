@@ -17,9 +17,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   whose stored form differed in any of these ways was rejected with
   "Catalog document not found" even when the record was a real match.
   When the rejection still happens, the error now includes the title
-  and identifiers of the record that *was* found, so the user can
+  and identifiers of the record that _was_ found, so the user can
   decide whether to fall back to `mendeley library add-by-catalog-id`
   (see below). (#101)
+- Transient `fetch failed` errors are now retried with exponential
+  backoff. The HTTP layer in `src/session.js` is wrapped by a new
+  `retryWithBackoff` helper (`src/retry.js`) that retries on HTTP
+  429 (honouring `Retry-After`), HTTP 5xx (502, 503, 504), and
+  common transient network errors (`fetch failed`, `ECONNRESET`,
+  `ETIMEDOUT`, `ENOTFOUND`, `EAI_AGAIN`). It does **not** retry on
+  4xx (except 408, 429) — those are client errors. Default: 4
+  attempts, 0.5 s → 1.5 s → 4 s → 12 s with up to 25 % jitter. The
+  final error, if all attempts are exhausted, includes the
+  underlying error code and an actionable hint. Per-call retry
+  config is available via the `retry` option on
+  `MendeleySession.request()`. (#103)
 
 ### Added
 

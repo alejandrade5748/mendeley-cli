@@ -327,7 +327,12 @@ test('raiseApiError regression: reads the body exactly once for a non-JSON error
   globalThis.fetch = recordingFetch([() => rsp]);
   const m = new Mendeley({ clientId: 'cid' });
   const session = new MendeleySession(m, { access_token: 'tok' });
-  await assert.rejects(() => session.get('/foo'), /plain text error body/);
+  // Disable retry (#103) so this test exercises the original
+  // raiseApiError body-read path on a 500, not the retry layer.
+  await assert.rejects(
+    () => session.get('/foo', { retry: { maxAttempts: 1 } }),
+    /plain text error body/,
+  );
   assert.equal(
     counts().bodyReads,
     1,
@@ -340,7 +345,8 @@ test('raiseApiError regression: reads the body exactly once for an empty body', 
   globalThis.fetch = recordingFetch([() => rsp]);
   const m = new Mendeley({ clientId: 'cid' });
   const session = new MendeleySession(m, { access_token: 'tok' });
-  await assert.rejects(() => session.get('/foo'), /status: 502/);
+  // Disable retry (#103) — see comment in the previous test.
+  await assert.rejects(() => session.get('/foo', { retry: { maxAttempts: 1 } }), /status: 502/);
   assert.equal(
     counts().bodyReads,
     1,
@@ -377,4 +383,71 @@ test('raiseApiError regression: 404 from a stream:true request reads the body on
   const session = new MendeleySession(m, { access_token: 'tok' });
   await assert.rejects(() => session.get('/foo', { stream: true }), /Not found/);
   assert.equal(counts().bodyReads, 1);
+});
+
+// ---- #103: retry on transient errors ----
+
+function fastRetry() {
+  // Override the retry layer so tests don't actually sleep.
+  return { maxAttempts: 4, baseMs: 1, maxMs: 5, jitter: 0 };
+}
+
+test('session retries on 429 and succeeds on the next try (#103)', async () => {
+  globalThis.fetch = mockFetch([
+    () => new Response(JSON.stringify({ message: 'rate-limited' }), { status: 429 }),
+    () => new Response('{}', { status: 200 }),
+  ]);
+  const m = new Mendeley({ clientId: 'cid' });
+  const session = new MendeleySession(m, { access_token: 'tok' });
+  const rsp = await session.get('/foo', { retry: fastRetry() });
+  assert.equal(rsp.status, 200);
+  assert.equal(globalThis.fetch.calls.length, 2, 'expected two fetch calls (1 retry)');
+});
+
+test('session retries on 503 and gives up after maxAttempts (#103)', async () => {
+  globalThis.fetch = mockFetch([
+    () => new Response('{}', { status: 503 }),
+    () => new Response('{}', { status: 503 }),
+    () => new Response('{}', { status: 503 }),
+    () => new Response('{}', { status: 503 }),
+  ]);
+  const m = new Mendeley({ clientId: 'cid' });
+  const session = new MendeleySession(m, { access_token: 'tok' });
+  await assert.rejects(() => session.get('/foo', { retry: fastRetry() }), /status: 503/);
+  assert.equal(globalThis.fetch.calls.length, 4, 'expected 4 attempts');
+});
+
+test('session does NOT retry on 404 (#103)', async () => {
+  globalThis.fetch = mockFetch([() => new Response('{"message":"nope"}', { status: 404 })]);
+  const m = new Mendeley({ clientId: 'cid' });
+  const session = new MendeleySession(m, { access_token: 'tok' });
+  await assert.rejects(() => session.get('/foo', { retry: fastRetry() }), /status: 404/);
+  assert.equal(globalThis.fetch.calls.length, 1, 'expected exactly 1 fetch call (no retry)');
+});
+
+test('session retries on undici fetch failed TypeError (#103)', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls < 2) throw new TypeError('fetch failed');
+    return new Response('{}', { status: 200 });
+  };
+  globalThis.fetch.calls = [];
+  const m = new Mendeley({ clientId: 'cid' });
+  const session = new MendeleySession(m, { access_token: 'tok' });
+  const rsp = await session.get('/foo', { retry: fastRetry() });
+  assert.equal(rsp.status, 200);
+  assert.equal(calls, 2, 'expected 1 retry');
+});
+
+test('session gives up after retries on persistent network failure and wraps error (#103)', async () => {
+  globalThis.fetch = async () => {
+    throw new TypeError('fetch failed');
+  };
+  const m = new Mendeley({ clientId: 'cid' });
+  const session = new MendeleySession(m, { access_token: 'tok' });
+  await assert.rejects(
+    () => session.get('/foo', { retry: fastRetry() }),
+    /Network request failed.*Try again/s,
+  );
 });
