@@ -12,7 +12,7 @@
 
 import process from 'node:process';
 import { Command } from '../lib/cli/command.js';
-import { Output } from '../lib/cli/output.js';
+import { Output, CliExitError } from '../lib/cli/output.js';
 
 import * as authCmd from '../lib/cli/commands/auth.js';
 import * as documentsCmd from '../lib/cli/commands/documents.js';
@@ -132,7 +132,17 @@ libraryCmd.register(root);
   try {
     await root.parseAndRun(argv, out);
   } catch (err) {
-    out.fail(err.message || String(err), err.exitCode || 1);
+    if (err instanceof CliExitError) {
+      // Error already printed by fail(); just set exit code. Don't call
+      // process.exit() — it trips a libuv assertion on Windows when fetch
+      // keep-alive handles are still open (#90).
+      process.exitCode = err.exitCode;
+    } else {
+      // Unhandled error (e.g. MendeleyException from raiseApiError) —
+      // print it and set exit code without process.exit() (#90).
+      out.writeError(err.message || String(err));
+      process.exitCode = err.exitCode || 1;
+    }
   }
 })();
 
