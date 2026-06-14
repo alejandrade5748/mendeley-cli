@@ -45,7 +45,18 @@ export class Catalog extends GetByIdResource {
     if (body.length === 0) {
       throw new MendeleyException('Catalog document not found');
     }
-    return new objType(this.session, body[0]);
+    // The Mendeley API may return loosely-matched results for identifier
+    // lookups. Validate that the first result actually contains the
+    // requested identifier before returning it — otherwise a stray
+    // record would be returned as a high-confidence match (#71).
+    const record = body[0];
+    const requested = { arxiv, doi, isbn, issn, pmid, scopus, filehash };
+    if (!identifierMatches(record, requested)) {
+      throw new MendeleyException(
+        'Catalog document not found: no result matched the requested identifier',
+      );
+    }
+    return new objType(this.session, record);
   }
 
   async lookup({ arxiv, doi, pmid, filehash, title, authors, year, source, view } = {}) {
@@ -100,4 +111,28 @@ export function viewType(view) {
       all: CatalogAllDocument,
     }[view] || CatalogDocument
   );
+}
+
+/**
+ * Check whether a catalog record contains the requested identifier (#71).
+ *
+ * The Mendeley API stores identifiers as an object mapping type to an
+ * array of values, e.g. `{ arxiv: ['1706.03762'], doi: ['10.5555/1'] }`.
+ * This returns true only if every requested identifier is present in
+ * the record, so a stray loosely-matched result is rejected.
+ *
+ * @param {object} record  the catalog record returned by the API
+ * @param {Record<string, string>} requested  the identifiers the user asked for
+ * @returns {boolean}
+ */
+export function identifierMatches(record, requested) {
+  const ids = record.identifiers || {};
+  for (const [type, value] of Object.entries(requested)) {
+    if (value === undefined || value === null) continue;
+    const candidates = ids[type];
+    if (!Array.isArray(candidates) || !candidates.includes(String(value))) {
+      return false;
+    }
+  }
+  return true;
 }
