@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The `File` model now exposes the canonical Mendeley API field
+  names: `filename` (was wrongly `file_name`), `content_type` (was
+  `mime_type`), plus the previously-missing `document_id`,
+  `extension`, and `created`. Before this fix, `files list` / `files
+get` dropped 5 of the 8 fields the API returns because the
+  whitelist used names that never matched, leaving only `id`, `size`,
+  `filehash`. (#115)
+- `files download <id> <dir>` now saves under the file's real name
+  (e.g. `attention.pdf`) instead of `file-<id>`. The command resolves
+  the filename from the file metadata's `filename` field (or the
+  `Content-Disposition` header), falling back to the id only when
+  neither is available. `--filename <name>` still overrides
+  everything. (#116)
 - `files add-highlight` and `files add-sticky-note` now POST to
   `/annotations` (no trailing slash). Previously they posted to
   `/annotations/`, which the real Mendeley API rejects with 404/405 —
