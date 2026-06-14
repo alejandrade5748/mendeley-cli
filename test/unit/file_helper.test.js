@@ -104,3 +104,21 @@ test('streamToFile rejects a missing response body', async () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('streamToFile auto-creates nested destination directories (#13)', async () => {
+  const base = mkdtempSync(join(tmpdir(), 'mendeley-cli-mkdir-'));
+  const dir = join(base, 'nested', 'deep', 'dir');
+  try {
+    // dir does not exist yet — streamToFile should create it.
+    assert.ok(!existsSync(dir));
+    const rsp = responseFromString('hello', {
+      'content-disposition': 'attachment; filename="auto-created.pdf"',
+    });
+    const path = await streamToFile(rsp, dir);
+    assert.ok(path.endsWith('auto-created.pdf'));
+    assert.ok(existsSync(path), 'file must exist after download');
+    assert.equal(readFileSync(path, 'utf8'), 'hello');
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+  }
+});
