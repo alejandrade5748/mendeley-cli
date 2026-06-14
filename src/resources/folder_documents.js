@@ -24,8 +24,12 @@ export class FolderDocuments extends ListResource {
   /**
    * Add an existing document to this folder.
    *
+   * The Mendeley API returns **204 No Content** (empty body) on success,
+   * so this method returns `null` when there is no body to parse.
+   * If a JSON body is present, it is wrapped in a `UserDocument`.
+   *
    * @param {string} documentId
-   * @returns {Promise<UserDocument>}
+   * @returns {Promise<UserDocument|null>}
    */
   async add(documentId) {
     const rsp = await this.session.post(this._url, {
@@ -35,7 +39,14 @@ export class FolderDocuments extends ListResource {
         accept: UserDocument.contentType,
       },
     });
-    return new UserDocument(this.session, await rsp.json());
+    // 204 No Content — nothing to parse.
+    const text = await rsp.text();
+    if (!text) return null;
+    try {
+      return new UserDocument(this.session, JSON.parse(text));
+    } catch {
+      return null;
+    }
   }
 
   /**

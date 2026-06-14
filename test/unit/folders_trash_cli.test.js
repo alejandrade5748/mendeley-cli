@@ -51,9 +51,11 @@ test('folders add-document posts with the document content-type (not 415)', asyn
     'application/vnd.mendeley-document.1+json',
     'must use the document content-type, not the fabricated folder-document type',
   );
-  // Output is the document JSON.
+  // Output must be the clean success envelope, not an error.
   const out = JSON.parse(result.stdout);
-  assert.equal(out.id, 'doc-1');
+  assert.equal(out.ok, true);
+  assert.equal(out.folder_id, 'folder-1');
+  assert.equal(out.document_id, 'doc-1');
 });
 
 test('folders remove-document deletes the membership', async () => {
@@ -148,8 +150,9 @@ function startApiServer(captured, { trashCount = 0 } = {}) {
           body: JSON.parse(chunks),
           contentType: req.headers['content-type'],
         };
-        res.setHeader('content-type', 'application/vnd.mendeley-document.1+json');
-        res.end(JSON.stringify({ id: 'doc-1', title: 'Test Doc' }));
+        // The Mendeley API returns 204 No Content on success.
+        res.statusCode = 204;
+        res.end();
       });
       return;
     }
